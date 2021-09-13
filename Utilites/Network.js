@@ -23,9 +23,11 @@ class Network {
     favorDishes = []
     oldMenu = []
     stories = []
-    additionMenu = {}
+    banner1 = {}
+    banner2 = {}
     Allstories = []
     additionMenu = []
+    paywalls = {}
     
     getSectionsAndDayDishes(arr) {
         const newDays = []
@@ -70,6 +72,14 @@ class Network {
         const newArr = this.favorDishes.filter((item) => item.id != dish.id)
         this.favorDishes = newArr
         favorHandler(dish.id,'remove')
+    }
+
+    canOpenRec(id) {
+        if(this.dayDishes.filter(dish => dish.id == id).length || this.user?.access){
+            return true
+        } else {
+            return false
+        }
     }
 
     changePersons(id,persons){
@@ -168,8 +178,10 @@ export function getMenu() {
                     network.allDishes = data.menu
                     network.listDishes = data?.list
                     network.oldMenu = data?.menu_old
-                    network.additionMenu = data?.addition_menu
                     network.stories = data?.stories
+                    network.banner1 = data?.banner_1
+                    network.banner2 = data?.banner_2
+                    network.paywalls = data?.paywalls
                     const storiesArr = []
                     for (let i = 0; i < data.stories.length; i++) {
                         storiesArr.push(data.stories[i].stories)
@@ -193,12 +205,13 @@ export function getMenu() {
 
 export function getScreens() {
     return new Promise(function(resolve,reject){
-        fetch(Config.apiDomain + 'onbording',{
+        fetch(Config.apiDomain + 'screens/onbording',{
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
         },
-        // body: JSON.stringify({"method" : "list_get","token":''}) 
         })
         .then(response =>{
             response.json().then(data => {
@@ -213,6 +226,34 @@ export function getScreens() {
                     network.onboarding = data
                 })
                 resolve(newItems) 
+            }
+            else {     
+                reject(data.error)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getTariffs() {
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + 'plans',{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getTariffs: ' + JSON.stringify(data));
+            if (data.length) {
+                resolve(data) 
             }
             else {     
                 reject(data.error)
@@ -267,13 +308,14 @@ export function payAppleOrAndroid(receipt) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            "Accept":'application/json'
         },
         body: body
         })
         .then(response =>{
             response.json().then(data => {
             console.warn('payApple: ' + JSON.stringify(data));
-            if (data.message == 'ok') {
+            if (data.status == 'ok') {
                 resolve()
             }
             else {     
@@ -385,6 +427,7 @@ export function listClear() {
 export function updateInfo(what,value) {
     let formdata = new FormData();
         formdata.append(what, value)
+    console.warn('object',formdata)
     return new Promise(function(resolve,reject){
         fetch(Config.apiDomain + `user/update`,{
         method: 'POST',
@@ -398,11 +441,12 @@ export function updateInfo(what,value) {
         .then(response =>{
             response.json().then(data => {
             console.warn('updateInfo: ' + JSON.stringify(data));
-            if (data) {
+            if (data?.status != 'error') {
                 resolve() 
-            }
-            else {     
-                reject(data.error)
+            }else if(data?.token && what == 'phone'){
+                resolve(data.token)
+            } else {     
+                reject(data.message)
             }
         }).catch(err =>{
             console.warn(err);
@@ -465,7 +509,9 @@ export function getFavors() {
             response.json().then(data => {
             console.warn('getFavors: ' + JSON.stringify(data));
             if (data) {
-                network.favorDishes = data
+                mobx.runInAction(() => {
+                    network.favorDishes = data
+                })
                 resolve() 
             }
             else {     
@@ -510,6 +556,97 @@ export function favorHandler(id,action) {
             console.warn(err);
             reject();
             })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getUserInfo() {
+
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `user/info`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization':'Bearer ' + network.access_token,
+            'Accept': "application/json"
+        },
+        })
+        .then(response =>{
+        response.json().then(data => {
+            console.warn('getUserInfo: ' + JSON.stringify(data));
+            if (data.token) {
+                mobx.runInAction(() => {
+                    network.user = data
+                    network.access_token = data.token
+                })
+                AsyncStorage.setItem('token',data.token)
+                resolve()
+            }else {
+                reject()
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getCode(phone) {
+
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `user/sendcode`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization':'Bearer ' + network.access_token,
+            'Accept': "application/json"
+        },
+        body:JSON.stringify(phone)
+        })
+        .then(response =>{
+        response.json().then(data => {
+            console.warn('getCode: ' + JSON.stringify(data));
+            if (data.status == 'Ok') {
+                resolve()
+            }else {
+                reject(data.message)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function sendCode(phone,code) {
+    console.warn(JSON.stringify({code,phone}))
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `user/verifycode`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization':'Bearer ' + network.access_token,
+            'Accept': "application/json"
+        },
+        body:JSON.stringify({code,phone})
+        })
+        .then(response =>{
+        response.json().then(data => {
+            console.warn('sendCode: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve()
+            } else {
+                reject(data.message)
+            }
+        })
         })
         .catch(err =>{
         console.warn(err);

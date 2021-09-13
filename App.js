@@ -15,7 +15,7 @@ type Props = {};
 export default class App extends Component<Props> {
 
   UNSAFE_componentWillMount() {
-    LogBox.ignoreAllLogs()
+    // LogBox.ignoreAllLogs()
     changeNavigationBarColor('#000000',true);
     if(Platform.OS === "android") {
       StatusBar.setBackgroundColor('#FFF', true);

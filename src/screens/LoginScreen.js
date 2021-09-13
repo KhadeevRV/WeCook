@@ -1,18 +1,21 @@
-import React, { Component,useState } from 'react'
-import { StyleSheet, Text, View,SafeAreaView, Image, Platform, KeyboardAvoidingView } from 'react-native'
+import React, { useEffect,useState } from 'react'
+import { StyleSheet, Text, View,SafeAreaView, Image, Platform, KeyboardAvoidingView, Alert } from 'react-native'
 import { TouchableOpacity, FlatList, ScrollView, TextInput } from 'react-native-gesture-handler'
-import network, { getList, sendAnswer } from '../../Utilites/Network'
+import network, { getCode, getList, sendAnswer } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import { runInAction } from 'mobx'
 import {Btn} from '../components/Btn'
 import common from '../../Utilites/Common'
 import SkipHeader from '../components/SkipHeader'
 import Colors from '../constants/Colors'
+import Spinner from 'react-native-loading-spinner-overlay'
 
 
 const LoginScreen = observer(({navigation,route}) => {
 
     const [phone, setPhone] = useState('+')
+    const [loading, setloading] = useState(false)
+    const [inputColor, setinputColor] = useState('#F5F5F5')
 
     const changePhone = (phone) => {
         let newPhone = phone
@@ -23,15 +26,26 @@ const LoginScreen = observer(({navigation,route}) => {
     }
     const screen = network.onboarding['LoginScreen']
 
-    const sendPhone = () => {
-        // console.warn(phone.replace(/[^\d.-]/g, ''))
-        sendAnswer(screen?.request_to,undefined,undefined,undefined,undefined,undefined,phone.replace(/[^\d.-]/g, ''))
-        runInAction(() => network.user.phone = phone.replace(/[^\d.-]/g, ''))
-        // navigation.navigate('MainStack')
-        navigation.navigate('SendSmsScreen',{fromProfile:!!fromProfile})
+    const sendPhone = async() => {
+        const clearPhone = phone.replace(/[^\d.-]/g, '')
+        setloading(true)
+        try {
+            await getCode(clearPhone)
+            setloading(false)
+            navigation.navigate('SendSmsScreen',{from:from,phone:clearPhone,closeDisable:!!closeDisable,exit:exit})
+        } catch (err) {
+            setloading(false)
+            Alert.alert('Ошибка',err)
+        }
     }
 
-    const fromProfile = route?.params?.fromProfile
+    const {from,closeDisable,exit} = route?.params
+
+    useEffect(() => {
+        if(!!closeDisable){
+            navigation.setParams({gestureEnable:false})
+        }
+    }, [])
 
     return (
         <KeyboardAvoidingView
@@ -40,14 +54,24 @@ const LoginScreen = observer(({navigation,route}) => {
             style={{flex:1,backgroundColor:'#FFF'}}
             contentContainerStyle={{backgroundColor:'#FFF'}}
         >
+        <Spinner visible={loading} />
         <SafeAreaView />
-        <SkipHeader skip={() => navigation.navigate('MainStack')} withBack={!!fromProfile} title={'Вход'} withSkip={!!!fromProfile} goBack={() => navigation.goBack()} />
-        <ScrollView style={{backgroundColor:'#FFF'}}>
+        <SkipHeader 
+            skip={() => navigation.navigate(exit ? 'ReceptDayScreen' : 'MainStack')} 
+            withBack={!!from}
+            closeDisable={!!closeDisable} 
+            title={'Вход'} 
+            withSkip={!!!from} 
+            goBack={() => navigation.goBack()}
+        />
+        <ScrollView style={{backgroundColor:'#FFF'}} contentContainerStyle={{paddingTop:8}}>
             <View style={{paddingHorizontal:16}}>
                 <Text style={styles.title}>Укажи свой номер телефона</Text>
                 <Text style={styles.subtitle}>Что бы запомнили твои персональные настройки</Text>
                 <TextInput 
-                    style={styles.input}
+                    style={[styles.input,{backgroundColor:inputColor}]}
+                    onFocus={() => setinputColor('#EEEEEE')}
+                    onBlur={() => setinputColor('#F5F5F5')}
                     selectionColor={Colors.textColor}
                     value={phone} keyboardType={'numeric'}
                     onChangeText={(text) => changePhone(text)}
@@ -60,7 +84,8 @@ const LoginScreen = observer(({navigation,route}) => {
                     title={'Продолжить'} 
                     // title={'Получить код'} 
                     onPress={() => sendPhone()}
-                    // onPress={() => navigation.navigate('SendSmsScreen'),{fromProfile}}
+                    customStyle={{borderRadius:16}} 
+                    customTextStyle={{fontWeight:'600',fontSize:16,lineHeight:19}}
                     backgroundColor={Colors.yellow} underlayColor={Colors.underLayYellow} disabled={phone.length < 2} />
         </View>
         <SafeAreaView backgroundColor={"#FFF"} />
@@ -81,7 +106,7 @@ const styles = StyleSheet.create({
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
         lineHeight:17,
         fontWeight:'500',
-        marginBottom:20
+        marginBottom:21
     },
     input:{
         width:'100%',

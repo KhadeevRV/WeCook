@@ -1,7 +1,7 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
 import { StyleSheet, Text, View, Image, Platform, KeyboardAvoidingView, ImageBackground, Dimensions, SafeAreaView, BackHandler, StatusBar, Animated, InteractionManager } from 'react-native'
 import { TouchableOpacity, FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
-import network, { getList } from '../../Utilites/Network'
+import network, { getList, getUserInfo } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import { runInAction } from 'mobx'
 import {Btn} from '../components/Btn'
@@ -54,12 +54,18 @@ const MenuScreen = observer(({navigation}) => {
     const menuBody = []
     const screens = []
 
+    const goToProfile = () => {
+        if(network.user?.access && !network.user?.phone){
+            navigation.navigate('LoginScreen',{closeDisable:true,from:'MenuScreen'})
+        } else {
+            navigation.navigate('ProfileScreen')            
+        }
+    }
+
     const header = [
         <View style={styles.header} key={'menuHeader'}>
             <TouchableOpacity activeOpacity={1} style={{paddingHorizontal:16,paddingVertical:11}}
-                // onPress={() => !network.user.phone ? navigation.navigate('ProfileScreen') :  navigation.navigate('LoginScreen',{fromProfile:true})}
-                // onPress={() => navigation.navigate('OnboardingStack')}
-                onPress={() => navigation.navigate('ProfileScreen')}
+                onPress={() => goToProfile()}
             >
                 <Image source={require('../../assets/icons/profile.png')} style={{width:20,height:22}} />
             </TouchableOpacity>
@@ -83,7 +89,7 @@ const MenuScreen = observer(({navigation}) => {
     ]
 
     const openRec = (rec) => {
-        if(rec.access){
+        if(network.canOpenRec(rec.id)){
             const recept = currentWeek == 'Текущая' ? network.allDishes.find((item) => item.id == rec.id) : network.oldMenu.find((item) => item.id == rec.id)
             navigation.navigate('ReceptScreen',{rec:recept})
         } else {
@@ -92,7 +98,14 @@ const MenuScreen = observer(({navigation}) => {
     }
 
     const listHandler = (isInList,recept) => {
-        isInList ? network.deleteFromList(recept) : network.addToList(recept)
+        // Если блюдо в списке, то удаляем. Если нет, то проверяем, можно ли его добавить(открыть)
+        if(isInList){
+            network.deleteFromList(recept)   
+        } else if (network.canOpenRec(recept.id)) {
+            network.addToList(recept)
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
 
     const filterHandler = (what,weekName = 'Текущая') => {
@@ -109,6 +122,18 @@ const MenuScreen = observer(({navigation}) => {
             setFilteredMenu(newMenu)
         } else {
             setFilteredMenu(initArr)
+        }
+    }
+
+    //! Баннеры
+    
+    const bannerHandler = (banner) => {
+        if(banner.type == 'list_history'){
+            navigation.navigate('EarlyListScreen')
+        } else if(banner.type == 'menu_holiday') {
+            navigation.navigate('HolidayMenuScreen',{data:banner.recipes,bgImg:banner?.image_inner?.big_webp,description:banner?.description,title:banner?.title})
+        } else {
+            navigation.navigate('PayWallScreen',{data:network.paywalls[banner.type]})
         }
     }
 
@@ -263,7 +288,6 @@ const MenuScreen = observer(({navigation}) => {
     }
 
     //! Сторисы
-
     const [stop, setStop] = useState(true)
     const [currentStory, setCurrentStory] = useState(0)
     const [storiesModal, setStoriesModal] = useState(false)
@@ -323,11 +347,14 @@ const MenuScreen = observer(({navigation}) => {
                     marginTop:16,paddingRight:7}}>
                     {storiesBody}
                 </ScrollView>
-                <TouchableOpacity style={{marginTop:20}} activeOpacity={1} onPress={() => navigation.navigate('HolidayMenuScreen')}>
-                <ImageBackground style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,borderRadius:16}} borderRadius={16}
-                    source={{uri:network.additionMenu?.background}}>
-                    <Text style={styles.addsTitle}>{network.additionMenu?.title}</Text>
-                    <Text style={styles.addsTitle}>{network.additionMenu?.description}</Text>
+                <TouchableOpacity style={{marginTop:20}} activeOpacity={1} 
+                    onPress={() => bannerHandler(network.banner1)}>
+                <ImageBackground 
+                    style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,borderRadius:16,minHeight:80}} 
+                    borderRadius={16}
+                    source={{uri:network.banner1?.image_btn?.big_webp}}
+                >
+                    <Text style={styles.addsTitle}>{network.banner1?.title_on_btn}</Text>
                 </ImageBackground>
                 </TouchableOpacity>
                 <View style={{marginTop:38,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingLeft:16}}>
@@ -346,14 +373,14 @@ const MenuScreen = observer(({navigation}) => {
                     renderItem={({item,index}) => <DayRecipeCard recept={item} onPress={() => openRec(item)} 
                         listHandler={(isInList,recept) => listHandler(isInList,recept)} key={item.id}/> }
                 />
-                <TouchableOpacity activeOpacity={1} onPress={() => navigation.navigate('EarlyListScreen')}>
-                <LinearGradient colors={['rgba(255,198,198, 1)', `rgba(255,239,198,1)`]} 
-                        start={{x:0,y:1}}
-                        end={{x:1,y:1}}
-                        style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,borderRadius:16}}
+                <TouchableOpacity activeOpacity={1} onPress={() => bannerHandler(network.banner2)}>
+                <ImageBackground 
+                        source={{uri:network.banner2?.image_btn?.big_webp}}
+                        style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,minHeight:80}}
+                        borderRadius={16}
                 >
-                    <Text style={styles.addsTitle}>Рецепты ранее{'\n'}добавленные в список</Text>
-                </LinearGradient>
+                    <Text style={styles.addsTitle}>{network.banner2?.title_on_btn}</Text>
+                </ImageBackground>
                 </TouchableOpacity>
                 <View style={{marginTop:38,flexDirection:'row',alignItems:'center',paddingLeft:16,marginBottom:10}}>
                     <Text style={styles.subtitle}>Меню на неделю</Text>
@@ -380,7 +407,7 @@ const MenuScreen = observer(({navigation}) => {
                     snapToInterval={common.getLengthByIPhone7(0)-common.getLengthByIPhone7(32)}
                     disableIntervalMomentum={true}
                     snapToAlignment={"center"}
-                    style={{flex:1}}
+                    // style={{flex:1}}
                     snapToOffsets={screens}
                     onScroll={Animated.event(
                         [{nativeEvent: {contentOffset: {x: scrollX}}}],
@@ -404,7 +431,7 @@ const MenuScreen = observer(({navigation}) => {
                     underlayColor={Colors.underLayYellow}>
                     <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
                     <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7}}>
+                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
                         <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
                     </View>
                     <Text style={styles.addsTitle}>Рецепт в списке</Text>

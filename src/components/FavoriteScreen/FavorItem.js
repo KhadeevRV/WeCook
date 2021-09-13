@@ -34,7 +34,10 @@ const FavorItem = observer(({recept,onPress,listHandler}) => {
                 blurRadius={24}
                 reducedTransparencyFallbackColor={'#FFF'}
             /> : null}
+            {network.canOpenRec(recept.id) ? 
             <Image source={require('../../../assets/icons/list.png')} style={{width:18,height:22}} />
+            :
+            <Image source={require('../../../assets/icons/lock.png')} style={{width:22,height:22}} />}
             </>
         </TouchableOpacity>
         </View>

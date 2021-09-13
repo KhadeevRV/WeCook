@@ -49,18 +49,20 @@ const ListScreen = observer(({navigation}) => {
             let found = reducer.find(p => p.id === item.id)
             // Если ингредиент до этого уже занесён в массив
             if(found){
+                // Пересчитываем кол-во ингредиентов
                 let newIngr = {...found}
                 newIngr.combined = true
-                newIngr.count = (parseFloat(item?.count * item?.persons) + parseFloat(newIngr?.initCount * newIngr?.persons)).toFixed(2)
+                newIngr.count = Math.ceil(parseFloat(item?.count * item?.persons) + parseFloat(newIngr?.initCount * newIngr?.persons))
                 newIngr.is_buyed = item?.is_buyed || newIngr?.is_buyed
-                newIngr.piece ? newIngr.piece = (item?.piece * item?.persons) + (newIngr?.initPiece * newIngr?.persons) : null
+                newIngr.piece ? newIngr.piece = Math.ceil((item?.piece * item?.persons) + (newIngr?.initPiece * newIngr?.persons)) : null
                 return [...reducer.filter((ingr) => ingr.id != item.id),newIngr]
             } else {
                 let newIngr = {...item}
+                // Ключи initCount и initPiece необходимы, чтобы при "показать/скрыть" блюда корректно рассчитывалось кол-во
                 newIngr.initCount = item?.count
                 newIngr.initPiece= item?.piece
-                newIngr.count = parseFloat(item?.count * item?.persons)
-                newIngr.piece ? newIngr.piece = item?.piece * item?.persons : null
+                newIngr.count = Math.ceil(item?.count * item?.persons)
+                newIngr.piece ? newIngr.piece = Math.ceil(item?.piece * item?.persons) : null
                 reducer.push(newIngr)
             }
             return reducer
@@ -99,7 +101,11 @@ const ListScreen = observer(({navigation}) => {
     }
 
     const openRec = (rec) => {
-        navigation.navigate('ReceptScreen',{rec:rec})
+        if(network.canOpenRec(rec.id)){
+            navigation.navigate('ReceptScreen',{rec:rec})
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
 
     const openIngrModal = (ingr) => {
@@ -120,26 +126,27 @@ const ListScreen = observer(({navigation}) => {
             let items = []
             // Преобразовываем массив, чтобы не было повторяющихся ингредиентов sectionObj - массив всех ингредиентов, где keys[i] - название секции
             const filteredArr = sectionObj[keys[i]].reduce((reducer,item) => {
-            let found = reducer.find(p => p.id === item.id)
-            // Если ингредиент до этого уже занесён в массив
-            if(found){
-                // Пересчитываем кол-во ингредиентов
-                let newIngr = {...found}
-                newIngr.count = (parseFloat(item?.count * item?.persons) + parseFloat(newIngr?.initCount * newIngr?.persons)).toFixed(2)
-                newIngr.is_buyed = item?.is_buyed || newIngr?.is_buyed
-                newIngr.piece ? newIngr.piece = (item?.piece * item?.persons) + (newIngr?.initPiece * newIngr?.persons) : null
-                return [...reducer.filter((ingr) => ingr.id != item.id),newIngr]
-            } else {
-                let newIngr = {...item}
-                // Ключи initCount и initPiece необходимы, чтобы при "показать/скрыть" блюда корректно рассчитывалось кол-во
-                newIngr.initCount = item?.count
-                newIngr.initPiece= item?.piece
-                newIngr.count = parseFloat(item?.count * item?.persons)
-                newIngr.piece ? newIngr.piece = item?.piece * item?.persons : null
-                reducer.push(newIngr)
-            }
-            return reducer
-        },[])
+                let found = reducer.find(p => p.id === item.id)
+                // Если ингредиент до этого уже занесён в массив
+                if(found){
+                    // Пересчитываем кол-во ингредиентов
+                    let newIngr = {...found}
+                    newIngr.combined = true
+                    newIngr.count = Math.ceil(parseFloat(item?.count * item?.persons) + parseFloat(newIngr?.initCount * newIngr?.persons))
+                    newIngr.is_buyed = item?.is_buyed || newIngr?.is_buyed
+                    newIngr.piece ? newIngr.piece = Math.ceil((item?.piece * item?.persons) + (newIngr?.initPiece * newIngr?.persons)) : null
+                    return [...reducer.filter((ingr) => ingr.id != item.id),newIngr]
+                } else {
+                    let newIngr = {...item}
+                    // Ключи initCount и initPiece необходимы, чтобы при "показать/скрыть" блюда корректно рассчитывалось кол-во
+                    newIngr.initCount = item?.count
+                    newIngr.initPiece= item?.piece
+                    newIngr.count = Math.ceil(item?.count * item?.persons)
+                    newIngr.piece ? newIngr.piece = Math.ceil(item?.piece * item?.persons) : null
+                    reducer.push(newIngr)
+                }
+                return reducer
+            },[])
             // Делаем массив текста ингредиентов
             for (let y = 0; y < filteredArr.length; y++) {
                 const ingred = filteredArr[y]

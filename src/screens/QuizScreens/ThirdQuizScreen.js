@@ -28,23 +28,37 @@ const ThirdQuizScreen = observer(({navigation}) => {
 
     const answerHandler = (item) => {
         sendAnswer(screen?.request_to,'ThirdQuizScreen',item?.text)
-        navigation.navigate(screen?.next_board)
+        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+            navigation.navigate('MainStack')
+        } else {
+            navigation.navigate(screen?.next_board)
+        }
+    }
+
+    const skipQuest = () => {
+        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+            navigation.navigate('MainStack')
+        } else {
+            navigation.navigate(screen?.next_board)
+        }
     }
 
     useEffect(() => {
         startAnim()
     }, [])
+
+
     return (
         <>
         <SafeAreaView backgroundColor={"#FFF"} />
-        <SkipHeader skip={() => navigation.navigate(screen?.next_board)} goBack={() => navigation.goBack()} />
+        <SkipHeader skip={() => skipQuest()} goBack={() => navigation.goBack()} />
         <Animated.View style={{opacity:fadeAnim,flex:1,backgroundColor:'#FFF',transform:[{translateY:marginAnim}]}}>
         <FlatList
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={header}
             data={screen?.answers}
             style={{backgroundColor:'#FFF'}}
-            contentContainerStyle={{paddingHorizontal:16,paddingBottom:50,paddingTop:7}}
+            contentContainerStyle={{paddingHorizontal:16,paddingBottom:50,paddingTop:8}}
             keyExtractor={(item, index) => item.id} 
             renderItem={({item,index}) => 
             <Animated.View style={{transform:[{translateY:contentMargin}]}}>

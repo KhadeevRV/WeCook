@@ -3,7 +3,7 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 
 platform :ios, '10.0'
 
-target 'Foodly' do
+target 'WeCook' do
     permissions_path = '../node_modules/react-native-permissions/ios'
 
     pod 'Permission-AppTrackingTransparency', :path => "#{permissions_path}/AppTrackingTransparency"
@@ -17,7 +17,7 @@ target 'Foodly' do
 
   pod 'RNFastImage', :path => '../node_modules/react-native-fast-image'
 
-  target 'FoodlyTests' do
+  target 'WeCookTests' do
     inherit! :complete
     # Pods for testing
   end

@@ -20,11 +20,21 @@ const FavoriteScreen = observer(({navigation}) => {
     const [currentFilters, setCurrentFilters] = useState([])
 
     const openRec = (rec) => {
-        navigation.navigate('ReceptScreen',{rec:rec})
+        if(network.canOpenRec(rec.id)){
+            navigation.navigate('ReceptScreen',{rec:rec})
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
  
     const listHandler = (isInList,recept) => {
-        isInList ? network.deleteFromList(recept) : network.addToList(recept)
+        if(isInList){
+            network.deleteFromList(recept)   
+        } else if (network.canOpenRec(recept.id)) {
+            network.addToList(recept)
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
 
     const filterHandler = (what) => {
@@ -44,7 +54,7 @@ const FavoriteScreen = observer(({navigation}) => {
     }
 
     const header = [
-        <View style={styles.header}>
+        <View style={styles.header} key={'favorHeader'}>
             <TouchableOpacity activeOpacity={1} style={{position:'absolute',left:0,paddingVertical:12,paddingHorizontal:16,zIndex:100}} 
             onPress={() => navigation.goBack()}>
                 <Image source={require('../../assets/icons/goBack.png')} style={{width:11,height:18,tintColor:Colors.textColor}} />
@@ -97,7 +107,7 @@ const FavoriteScreen = observer(({navigation}) => {
                     underlayColor={Colors.underLayYellow}>
                     <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
                     <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7}}>
+                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
                         <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
                     </View>
                     <Text style={{...styles.headerSubitle,fontWeight:'500'}}>Рецепт в списке</Text>

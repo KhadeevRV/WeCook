@@ -30,13 +30,13 @@ const DetailsScreen = observer(({navigation}) => {
             </View>
         </View>
     ]
-
+    
     const bodyArr = [
         {
             id:1,
             title:'Номер телефона',
             subtitle:network.user?.phone ? '+' + network.user?.phone : 'Нет данных',
-            onPress: () => navigation.navigate('LoginScreen',{fromProfile:true}),
+            onPress: () => navigation.navigate('LoginScreen',{from:'DetailsScreen'}),
         },
         {
             id:2,
@@ -86,8 +86,18 @@ const DetailsScreen = observer(({navigation}) => {
                 {body}
                 <View style={styles.container}>
                 <Text style={styles.title}>Подписка</Text>
+                </View>
+                {network.user.access ? 
+                    <ProfileItem 
+                        title={network.user?.subscription?.plan?.name} 
+                        subtitle={'Активна до ' + new Date(network.user?.subscription?.info?.expired)?.toLocaleDateString()} 
+                        onPress={() => navigation.navigate('AboutSubScreen')} 
+                        key={network.user?.subscription?.plan?.id} 
+                    />
+                :
+                <View style={styles.container}>
                 <TouchableOpacity style={{marginBottom:16}} activeOpacity={1}
-                        onPress={() => navigation.navigate('PayWallScreen')}>
+                        onPress={() => navigation.navigate('PayWallScreen',{data:network.paywalls.paywall_sale})}>
                     <LinearGradient colors={['rgba(235,255,222, 1)', `rgba(167,239,255,1)`]} 
                             start={{x:0,y:1}}
                             end={{x:1,y:1}}
@@ -97,7 +107,7 @@ const DetailsScreen = observer(({navigation}) => {
                         <Text style={styles.payTitle}>Открой для себя полный{'\n'}доступ!</Text>
                     </LinearGradient>
                 </TouchableOpacity>
-                </View>
+                </View>}
             </ScrollView>
         </View>
     )

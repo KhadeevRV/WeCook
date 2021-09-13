@@ -82,13 +82,21 @@ const PersonsQuizScreen = observer(({navigation}) => {
     const answerHandler = (item) => {
         sendAnswer(screen?.request_to,'SecondQuizScreen',item?.text,undefined,undefined,item.id)
         runInAction(() => network.user.persons = item.id)
-        navigation.navigate(screen?.next_board)
+        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+            navigation.navigate('MainStack')
+        } else {
+            navigation.navigate(screen?.next_board)
+        }
     }
     
     const skip = () => {
-        navigation.navigate(screen?.next_board)
         runInAction(() => network.user.persons = screen?.default)
         sendAnswer(screen?.request_to,'SecondQuizScreen',undefined,undefined,undefined,screen?.default)
+        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+            navigation.navigate('MainStack')
+        } else {
+            navigation.navigate(screen?.next_board)
+        }
     }
 
     return (

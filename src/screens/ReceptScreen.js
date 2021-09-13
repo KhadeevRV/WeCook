@@ -115,7 +115,7 @@ const ReceptScreen = observer(({navigation,route}) => {
     const screenHeight = Dimensions.get('window').height
     const steps = []
     const ingredients = []
-    const [persons, setPersons] = useState(currentRec.persons)
+    const [persons, setPersons] = useState(currentRec.persons ?? network.user?.persons)
     const notif = useRef(null)
     const isInList = network.listDishes.length ? !!network.listDishes.filter((item) => item.id == currentRec.id).length : false
     const isInFavor = network.favorDishes.length ? !!network.favorDishes.filter((item) => item.id == currentRec.id).length : false

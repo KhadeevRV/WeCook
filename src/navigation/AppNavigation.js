@@ -29,6 +29,7 @@ import ChangeWishesScreen from '../screens/ChangePersonWishesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EarlyListScreen from '../screens/EarlyListScreen';
 import HolidayMenuScreen from '../screens/HolidayMenuScreen';
+import AboutSubScreen from '../screens/AboutSubScreen';
 
 
 const SlideFromBottom = {...TransitionPresets.ModalSlideFromBottomIOS}
@@ -62,7 +63,7 @@ const OnboardingStack = () => {
       <Stack.Screen name="SecondQuizScreen" options={{gestureEnabled:true, header:() => null}} component={SecondQuizScreen} />
       <Stack.Screen name="ThirdQuizScreen" options={{gestureEnabled:true, header:() => null}} component={ThirdQuizScreen} />
       <Stack.Screen name="PersonsQuizScreen" options={{gestureEnabled:true, header:() => null}} component={PersonsQuizScreen} />
-      <Stack.Screen name="LoginScreen" options={{gestureEnabled:true, header:() => null}} component={LoginScreen} />
+      <Stack.Screen name="LoginScreen" options={{gestureEnabled:false, header:() => null}} component={LoginScreen} />
       <Stack.Screen name="SendSmsScreen" options={{gestureEnabled:true, header:() => null}} component={SendSmsScreen} />
       <Stack.Screen name="PayWallScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:true}} component={PayWallScreen} />
     </Stack.Navigator>
@@ -77,7 +78,7 @@ const MainStack = () => {
       const slideFromRightScreens = 
         ['FavoriteScreen','ProfileScreen','DetailsScreen',
         'LoginScreen','SendSmsScreen','ChangeNameEmailScreen',
-        'ChangeWishesScreen','SettingsScreen','EarlyListScreen',
+        'ChangeWishesScreen','SettingsScreen','EarlyListScreen','AboutSubScreen',
         'HolidayMenuScreen']
       return(
       {headerShown: false,
@@ -92,9 +93,10 @@ const MainStack = () => {
       <Stack.Screen name="ListScreen" options={{gestureEnabled:false, header:() => null}} component={ListScreen} />
       <Stack.Screen name="FavoriteScreen" options={{gestureEnabled:true, header:() => null}} component={FavoriteScreen} />
       <Stack.Screen name="ProfileScreen" options={{gestureEnabled:true, header:() => null}} component={ProfileScreen} />
+      <Stack.Screen name="AboutSubScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={AboutSubScreen} />
       <Stack.Screen name="PayWallScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={PayWallScreen} />
       <Stack.Screen name="DetailsScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={DetailsScreen} />
-      <Stack.Screen name="LoginScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={LoginScreen} />
+      <Stack.Screen name="LoginScreen" options={{gestureEnabled:false, header:() => null}} initialParams={{fromOnboarding:false}} component={LoginScreen} />
       <Stack.Screen name="SendSmsScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={SendSmsScreen} />
       <Stack.Screen name="ChangeNameEmailScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={ChangeNameEmailScreen} />
       <Stack.Screen name="ChangeWishesScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={ChangeWishesScreen} />

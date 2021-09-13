@@ -16,7 +16,9 @@ const QuizItem = ({title='',icons=[],onPress=() => null,persons=false}) => {
             )
         } else {
             iconsView.push(
-                <Image source={{uri:icons[i]}} style={{width:20,height:20,tintColor:Colors.textColor,marginRight:i + 1 === icons.length ? 0 : 4}} />
+                <Image source={{uri:icons[i]}} 
+                    style={{width:20,height:20,tintColor:Colors.textColor,marginRight:i + 1 === icons.length ? 0 : 4}}
+                />
             )
         }
     }
@@ -28,10 +30,10 @@ const QuizItem = ({title='',icons=[],onPress=() => null,persons=false}) => {
             width: 0,
             height: 4,
         },
-        shadowOpacity: 0.06,
-        shadowRadius: 14,
-    }}>
-    <View style={styles.card}>
+        shadowOpacity: 0.08,
+        shadowRadius: 20,marginBottom:16,
+    }} >
+    <View style={styles.card} onLayout={e => console.warn(e.nativeEvent.layout.height)}>
         <TouchableHighlight style={styles.container} underlayColor={Colors.underLayYellow} onPress={() => onPress()}>
             <>
             <View style={{flexDirection:'row',alignItems:'center',marginBottom:8}}>
@@ -50,10 +52,10 @@ const QuizItem = ({title='',icons=[],onPress=() => null,persons=false}) => {
 const styles = StyleSheet.create({
     container:{
         borderRadius:16,borderWidth:4,borderColor:Colors.underLayYellow,
-        padding:16,alignItems:'center'
+        padding:13,alignItems:'center',paddingBottom:12,
     },
     card:{
-        padding:8,width:'100%',backgroundColor:'#FFF',borderRadius:24,marginBottom:16,
+        padding:8,width:'100%',backgroundColor:'#FFF',borderRadius:24,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,

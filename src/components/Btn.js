@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
       height:50,
       width:'100%',
       justifyContent:'center',
-      borderRadius:Common.getLengthByIPhone7(12),
+      borderRadius:16,
       alignItems:'center',
   },
   title:{

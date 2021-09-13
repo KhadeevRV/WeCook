@@ -95,6 +95,9 @@ const EarlyListScreen = observer(({navigation}) => {
         <View style={{flex:1,backgroundColor:'#FFF'}}>
             <SafeAreaView backgroundColor={'#FFF'} />
             {header}
+            {/* <Text style={{fontSize:18,color:'red',textAlign:'center'}}>
+                В РАЗРАБОТКЕ (ЛОГИКУ НЕ СМОТРЕТЬ, БЛЮДА ВЗЯТЫ С МЕНЮ ДЛЯ ПРОВЕРКИ ВЕРСТКИ)
+            </Text> */}
             <FlatList 
                 data={body}
                 extraData={network.allDishes} contentContainerStyle={{paddingHorizontal:16}}
@@ -120,7 +123,7 @@ const EarlyListScreen = observer(({navigation}) => {
                     underlayColor={Colors.underLayYellow}>
                     <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
                     <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7}}>
+                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
                         <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
                     </View>
                     <Text style={{...styles.headerSubitle,fontWeight:'500'}}>Рецепт в списке</Text>

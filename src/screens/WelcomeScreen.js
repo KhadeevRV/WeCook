@@ -18,13 +18,13 @@ const WelcomeScreen = observer(({navigation}) => {
     const [name, setname] = useState('')
     const screen = network.onboarding['WelcomeScreen']
     const {startAnim,fadeAnim,marginAnim,contentMargin} = QuizAnimation()
+    const [inputColor, setinputColor] = useState('#F5F5F5')
 
     const nextScreen = () => {
         runInAction(() => network.user.name = name)
         sendAnswer(screen?.request_to,undefined,undefined,name)
         navigation.navigate(screen?.next_board,{name})
     }
-    console.warn(screen?.request_to)
 
     useEffect(() => {
         startAnim()
@@ -39,7 +39,7 @@ const WelcomeScreen = observer(({navigation}) => {
         >
         <SafeAreaView />
         <SkipHeader skip={() => navigation.navigate(screen?.next_board)} withBack={false} />
-        <ScrollView style={{backgroundColor:'#FFF',paddingTop:7}}>
+        <ScrollView style={{backgroundColor:'#FFF',paddingTop:8}}>
             <View style={{paddingHorizontal:16}}>
                 <Animated.View style={{opacity:fadeAnim,transform:[{translateY:marginAnim}]}}>
                 <Text style={styles.title}>Добро пожаловать в Foodly</Text>
@@ -47,7 +47,9 @@ const WelcomeScreen = observer(({navigation}) => {
                 </Animated.View>
                 <Animated.View style={{transform:[{translateY:contentMargin}]}}>
                 <TextInput 
-                    style={styles.input}
+                    style={[styles.input,{backgroundColor:inputColor}]}
+                    onFocus={() => setinputColor('#EEEEEE')}
+                    onBlur={() => setinputColor('#F5F5F5')}
                     selectionColor={Colors.textColor}
                     value={name}
                     onChangeText={(text) => setname(text)}
@@ -56,10 +58,18 @@ const WelcomeScreen = observer(({navigation}) => {
                 </Animated.View>
             </View>
         </ScrollView>
-        <View style={{paddingHorizontal:8,paddingTop:13,paddingBottom:23,justifyContent:'flex-end',backgroundColor:'#FFF'}}>
+        <View style={{paddingHorizontal:8,paddingTop:13,paddingBottom:24,justifyContent:'flex-end',backgroundColor:'#FFF'}}>
                 <Btn title={'Далее'} onPress={() => nextScreen()}
+                    customTextStyle={{fontSize:16,lineHeight:16,fontWeight:'500'}}
                     backgroundColor={Colors.yellow} underlayColor={Colors.underLayYellow} disabled={!name.length} />
-                <Text style={styles.descr}>Уже есть аккаунт?<Text style={{...styles.descr,fontWeight:Platform.select({ ios: '700', android: 'bold' })}} onPress={() => navigation.navigate('LoginScreen')}> Войти</Text></Text>
+                <View style={{flexDirection:'row',alignSelf:'center'}}>
+                    <Text style={styles.descr}>Уже есть аккаунт? </Text>
+                    <Text style={{...styles.descr,fontWeight:Platform.select({ ios: '800', android: 'bold' }),marginLeft:8}} 
+                        onPress={() => navigation.navigate('LoginScreen')}
+                    >
+                        Войти
+                    </Text>
+                </View>
         </View>
         <SafeAreaView />
         </KeyboardAvoidingView>
@@ -91,6 +101,6 @@ const styles = StyleSheet.create({
     descr:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
         lineHeight:17,alignSelf:'center',
-        fontWeight:'500',marginTop:24
+        fontWeight:'500',marginTop:23
     },
 })

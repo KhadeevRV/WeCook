@@ -1,7 +1,7 @@
 const Config = {
     apiDomain:              'https://foodplan.site/api/',
     version:                '1.0',
-    appName:                'Lombardist',
+    appName:                'WeCook',
     urlTile:                'http://tile.stamen.com/terrain/{z}/{x}/{y}.jpg',
     newSlideInUp :{
       0: {

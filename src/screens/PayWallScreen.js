@@ -6,7 +6,7 @@ import { runInAction } from 'mobx'
 import common from '../../Utilites/Common'
 import SkipHeader from '../components/SkipHeader'
 import Colors from '../constants/Colors'
-import network, { payAppleOrAndroid, getMenu } from '../../Utilites/Network'
+import network, { payAppleOrAndroid, getMenu, authUser, getFavors, getUserInfo } from '../../Utilites/Network'
 import PayWallItem from '../components/PayWallScreen/PayWallItem'
 import { Btn } from '../components/Btn'
 import * as RNIap from 'react-native-iap'
@@ -15,10 +15,11 @@ import Spinner from 'react-native-loading-spinner-overlay'
 
 const PayWallScreen = observer(({navigation,route}) => {
 
-    const screen = network.onboarding['PayWallScreen']
     const [currentPlan, setCurrentPlan] = useState(0)
     const [loading, setLoading] = useState(false)
     const fromOnboarding = route?.params?.fromOnboarding
+    const {data} = route?.params
+    const screen = data ?? network.onboarding['PayWallScreen']
 
     const plansView = []
     for (let i = 0; i < screen?.plans.length; i++) {
@@ -26,15 +27,14 @@ const PayWallScreen = observer(({navigation,route}) => {
         plansView.push(
             <PayWallItem plan={plan} pressed={currentPlan == i} onPress={() => setCurrentPlan(i)} key={plan.id}/>
         )
-    }  
-
+    }
 
 
     const checksView = []
     for (let i = 0; i < screen?.list.length; i++) {
         const item = screen?.list[i];
         checksView.push(
-            <View style={{flexDirection:'row',alignItems:'center',marginBottom:common.getLengthByIPhone7(23)}} key={item?.text}>
+            <View style={{flexDirection:'row',alignItems:'center',marginBottom:20}} key={item?.text}>
                 <Image style={{width:20,height:20,marginRight:9}} source={{uri:item?.icon}} />
                 <Text style={{...styles.subtitle,maxWidth:'92%'}}>{item?.text}</Text>
             </View>
@@ -42,15 +42,32 @@ const PayWallScreen = observer(({navigation,route}) => {
     }
 
     const payHandler = () => {
+        // Покупка подписки
         RNIap.requestPurchase(screen?.plans[currentPlan].id, false)
         .then((receipt) => {
             setLoading(true)
+            // Отправляем id на сервер
             payAppleOrAndroid(receipt).then(async () => {
                 console.warn('receipt',receipt)
+                // Обновление инфы о пользователе
                 try {
+                    await getUserInfo()
                     setLoading(false)
-                    navigation.navigate(screen?.next_board)
+                    // Проверка - зашли ли через онбординг или с другого места. Если есть data, то не с онбординга
+                    if(data){
+                        // Если есть телефон, то все впорядке, возвращаем назад. Если нет, то обязательно ввести closeDisable - не позволяет пропустить экран
+                        // from - экран, на который перейдет пользователь после подтверждения телефона
+                        network.user?.phone ? navigation.goBack() : navigation.navigate('LoginScreen',{closeDisable:true,from:'MenuScreen'})
+                    } else {
+                        // Если есть телефон, то все впорядке, возвращаем назад. Если нет, то обязательно ввести closeDisable - не позволяет пропустить экран
+                        // from - экран, на который перейдет пользователь после подтверждения телефона
+                        network.user?.phone ? navigation.navigate(screen?.next_board) : navigation.navigate('LoginScreen',{closeDisable:true,from:screen?.next_board})
+                    }
+                    setTimeout(() => {
+                        Alert.alert(Config.appName,'Подписка куплена. Пздравляем!')
+                    }, 1500);
                 } catch (error) {
+                    console.warn(error)
                     setLoading(false)
                     Alert.alert('Ошибка','Ошибка при обновлении данных, пожалуйста, попробуйте перезайти в приложение',[{text:'Перезайти',onPress:() => DevSettings.reload()}])
                 }
@@ -73,7 +90,7 @@ const PayWallScreen = observer(({navigation,route}) => {
         <SafeAreaView backgroundColor={"#FFF"} />
         <Spinner visible={loading} />
         <SkipHeader skip={() => fromOnboarding ? navigation.navigate(screen?.next_board) : navigation.goBack()} withBack={false} />
-        <ScrollView style={{flex:1,backgroundColor:'#FFF'}} contentContainerStyle={{paddingHorizontal:16,paddingTop:7}} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{flex:1,backgroundColor:'#FFF'}} contentContainerStyle={{paddingHorizontal:16,paddingTop:8}} showsVerticalScrollIndicator={false}>
             <Text style={styles.title}>{screen?.title}</Text>
                 {plansView}
             <View style={{marginTop:16}}>
@@ -82,7 +99,10 @@ const PayWallScreen = observer(({navigation,route}) => {
         </ScrollView>
         <View style={{alignItems:'center',padding:8,backgroundColor:'#FFF'}}>
             <Text style={styles.decr}>{screen?.description_bottom}</Text>
-            <Btn underlayColor={Colors.underLayYellow} title={screen?.plans?.[currentPlan]?.button} backgroundColor={Colors.yellow} customStyle={{width:common.getLengthByIPhone7(0) - 16}} 
+            <Btn underlayColor={Colors.underLayYellow} 
+                title={screen?.plans?.[currentPlan]?.button} backgroundColor={Colors.yellow} 
+                customStyle={{width:common.getLengthByIPhone7(0) - 16,borderRadius:16}} 
+                customTextStyle={{fontWeight:'600',fontSize:16,lineHeight:19}}
                 onPress={() => payHandler()} />
         </View>
         <SafeAreaView backgroundColor={"#FFF"} />
@@ -97,7 +117,7 @@ const styles = StyleSheet.create({
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:22,
         lineHeight:26,
         fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        marginBottom:20,
+        marginBottom:30,
     },
     subtitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
@@ -108,6 +128,6 @@ const styles = StyleSheet.create({
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
         lineHeight:14,
         fontWeight:'500',
-        color:Colors.grayColor,textAlign:'center',marginBottom:24
+        color:Colors.grayColor,textAlign:'center',marginBottom:25
     }
 })

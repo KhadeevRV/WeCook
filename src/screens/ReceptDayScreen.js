@@ -23,8 +23,10 @@ const ReceptDayScreen = observer(({navigation}) => {
     }
     
     const openRec = (rec) => {
-        const recept = network.allDishes.find((item) => item.id == rec.id)
-        navigation.navigate('ReceptScreen',{rec:recept})
+        if(isFocused){
+            const recept = network.allDishes.find((item) => item.id == rec.id)
+            navigation.navigate('ReceptScreen',{rec:recept})
+        }
     }
 
     const titles = []

@@ -67,7 +67,7 @@ const PayWallItem = ({plan,onPress=() => null,pressed}) => {
 const styles = StyleSheet.create({
     container:{
         borderRadius:16,borderWidth:4,borderColor:Colors.underLayYellow,
-        padding:16,alignItems:'center'
+        padding:8,alignItems:'center'
     },
     card:{
         padding:8,width:'100%',backgroundColor:'#FFF',borderRadius:24,

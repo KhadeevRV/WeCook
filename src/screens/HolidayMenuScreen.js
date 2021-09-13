@@ -11,36 +11,51 @@ import { getBottomSpace, getStatusBarHeight } from 'react-native-iphone-x-helper
 import FavorItem from '../components/FavoriteScreen/FavorItem'
 import network from '../../Utilites/Network'
 import {captureScroll, getSpoingyTransform} from "../animations/SpoingyHelpers"
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 
-const HolidayMenuScreen = observer(({navigation}) => {
+const HolidayMenuScreen = observer(({navigation,route}) => {
     const headerHeight = 300
     const scrollY = useRef(new Animated.Value(0)).current
     const body = []
+    const {data,bgImg,description,title} = route.params
     const header = [
-        <View style={styles.header}>
-            <TouchableOpacity activeOpacity={1} style={{position:'absolute',left:0,paddingVertical:12,paddingHorizontal:16,zIndex:100}} 
+        <View style={[styles.header,{top:useSafeAreaInsets().top}]}>
+            <TouchableOpacity activeOpacity={1} 
+            style={{position:'absolute',left:0,paddingVertical:12,paddingHorizontal:16,zIndex:100}} 
             onPress={() => navigation.goBack()}>
                 <Image source={require('../../assets/icons/goBack.png')} style={{width:11,height:18,tintColor:Colors.textColor}} />
             </TouchableOpacity>
             <Animated.Text style={{...styles.headerTitle,
                 opacity:scrollY.interpolate({inputRange:[0,209,225],outputRange:[0,0,1],extrapolate:'extend'})}}
             >
-                Летнее праздничное меню
+                {title}
             </Animated.Text>
         </View>
     ]
 
+
     const openRec = (rec) => {
-        navigation.navigate('ReceptScreen',{rec:rec})
+        if(network.canOpenRec(rec.id)){
+            navigation.navigate('ReceptScreen',{rec:rec})
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
  
     const listHandler = (isInList,recept) => {
-        isInList ? network.deleteFromList(recept) : network.addToList(recept)
+        if(isInList){
+            network.deleteFromList(recept)   
+        } else if (network.canOpenRec(recept.id)) {
+            network.addToList(recept)
+        } else {
+            navigation.navigate('PayWallScreen')
+        }
     }
+    
 
-    for (let i = 0; i < network.additionMenu.menu.length; i++) {
-        const rec = network.additionMenu.menu[i]
+    for (let i = 0; i < data.length; i++) {
+        const rec = data[i]
         body.push(
             <View key={rec?.id}>
                 <FavorItem recept={rec} onPress={() => openRec(rec)} listHandler={(isInList,recept) => listHandler(isInList,recept)} />
@@ -72,14 +87,17 @@ const HolidayMenuScreen = observer(({navigation}) => {
         });
         return onBlur;
     }, [navigation]);
+    
     return (
         <View style={{flex:1,backgroundColor:'#FFF'}}>
             {header}
-            <Animated.View style={{height:44 + getStatusBarHeight(),backgroundColor:'#FFF',width:'100%',
-                position:'absolute',zIndex:5,opacity:scrollY.interpolate({inputRange:[0,200,210],outputRange:[0,0,1],extrapolate:'extend'})}} />
+            <Animated.View style={{height:44 + useSafeAreaInsets().top,backgroundColor:'#FFF',width:'100%',
+                position:'absolute',zIndex:5,
+                opacity:scrollY.interpolate({inputRange:[0,200,210],outputRange:[0,0,1],extrapolate:'extend'})}}
+            />
             <Animated.ScrollView {...captureScroll(scrollY)} showsVerticalScrollIndicator={false}>
                 <Animated.Image
-                source={require('../../assets/img/holidayImage.png')}
+                source={{uri:bgImg}}
                 style={{
                     width: '100%',
                     height: headerHeight,
@@ -87,19 +105,19 @@ const HolidayMenuScreen = observer(({navigation}) => {
                 }}
                 />
                 <View style={styles.container}>
-                    <Text style={styles.title}>Летнее праздничное меню</Text>
-                    <Text style={styles.subtitle}>Лето - прекрасная жаркая пора и в эту самую пору хочется баловать себя вкусной и полезной едой. Мы разработали меню, которое подходит не только для лета, но и для любых праздников. Дни рождения, выезд на природу с друзьми или просто на пикник в парк. Попробуйте и убедитесь сами.</Text>
+                    <Text style={styles.title}>{title}</Text>
+                    <Text style={styles.subtitle}>{description}</Text>
                     {body}
                 </View>
             </Animated.ScrollView>
             {network.listDishes.length ? 
             <View style={{padding:8,backgroundColor:"#FFF",paddingBottom:getBottomSpace() + 8}}>
                 <TouchableHighlight onPress={() => navigation.navigate('ListScreen')}
-                    style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16}} 
+                    style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16,}} 
                     underlayColor={Colors.underLayYellow}>
                     <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
                     <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7}}>
+                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
                         <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
                     </View>
                     <Text style={{...styles.headerSubitle,fontWeight:'500'}}>Рецепт в списке</Text>
@@ -119,7 +137,8 @@ export default HolidayMenuScreen
 
 const styles = StyleSheet.create({
     header:{
-        height:44,position:'absolute',zIndex:10,top:getStatusBarHeight(),
+        height:44,
+        position:'absolute',zIndex:10,
         width:'100%',justifyContent:'center',alignItems:'center',
         backgroundColor:'transparent',
     },

@@ -1,7 +1,7 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
-import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, ImageBackground, Animated, SafeAreaView, Alert,Share } from 'react-native'
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, ImageBackground, Animated, SafeAreaView, Alert,Share, AsyncStorage } from 'react-native'
 import {FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
-import network, { getList, listClear } from '../../Utilites/Network'
+import network, { authUser, getFavors, getList, getMenu, listClear, updateInfo } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import { runInAction } from 'mobx'
 import {Btn} from '../components/Btn'
@@ -15,6 +15,7 @@ import Config from '../constants/Config'
 import { FeedBackModal } from '../components/ProfileScreen/FeedBackModal'
 import Rate, { AndroidMarket } from 'react-native-rate'
 import { PrivacyModal } from '../components/ProfileScreen/PrivacyModal'
+import Spinner from 'react-native-loading-spinner-overlay'
 
 const FooterItem = ({title,onPress}) => {
     return(
@@ -30,7 +31,8 @@ const ProfileScreen = observer(({navigation}) => {
     const [socialModal, setSocialModal] = useState(false)
     const [privacyModal, setprivacyModal] = useState(false)
     const scrollY = useRef(new Animated.Value(0)).current
- 
+    const [loading, setloading] = useState(false)
+
     const header = [
         <View style={styles.header}>
             <TouchableOpacity activeOpacity={1} style={{position:'absolute',left:0,paddingVertical:11,paddingHorizontal:16,zIndex:100}} 
@@ -117,8 +119,23 @@ const ProfileScreen = observer(({navigation}) => {
         )
     }
 
+    const exit = async () => {
+        runInAction(async () => {
+            setloading(true)
+            network.access_token = null
+            await AsyncStorage.removeItem('token')
+            await authUser()
+            await getMenu()
+            await getFavors()
+            setloading(false)
+            navigation.navigate('LoginScreen',{exit:true})
+        })
+    }
+
+
     return (
         <View style={{flex:1,backgroundColor:'#FFF'}}>
+            <Spinner visible={loading} />
             <SafeAreaView backgroundColor={'#FFF'} />
             {header}
             <ScrollView 
@@ -135,8 +152,9 @@ const ProfileScreen = observer(({navigation}) => {
                         {network?.user?.name ?? 'Как тебя зовут?'}
                     </Animated.Text>
                     <Text style={styles.subtitle}>{network?.user?.phone ? '+' + network?.user?.phone : ''}</Text>
+                    {network.user?.access ? null :
                     <TouchableOpacity style={{marginTop:24,marginBottom:16}} activeOpacity={1}
-                        onPress={() => navigation.navigate('PayWallScreen')}>
+                        onPress={() => navigation.navigate('PayWallScreen',{data:network.paywalls.paywall_sale})}>
                     <LinearGradient colors={['rgba(235,255,222, 1)', `rgba(167,239,255,1)`]} 
                             start={{x:0,y:1}}
                             end={{x:1,y:1}}
@@ -145,7 +163,7 @@ const ProfileScreen = observer(({navigation}) => {
                     >
                         <Text style={styles.payTitle}>Открой для себя полный{'\n'}доступ!</Text>
                     </LinearGradient>
-                    </TouchableOpacity>
+                    </TouchableOpacity>}
                 </View>
                 {body}
                 <View style={{
@@ -166,7 +184,7 @@ const ProfileScreen = observer(({navigation}) => {
                 </TouchableOpacity>
                 </View>
                 {footer}
-                <TouchableOpacity style={{height:50,justifyContent:'center',alignItems:'center'}} activeOpacity={1} onPress={() => console.warn('exit')}>
+                <TouchableOpacity style={{height:50,justifyContent:'center',alignItems:'center'}} activeOpacity={1} onPress={() => exit()}>
                         <Text style={{...styles.footerText,color:'#FF0000'}} >Выйти</Text>
                 </TouchableOpacity>
                 <Text style={styles.versionText}>Версия приложения {Config.version}</Text>

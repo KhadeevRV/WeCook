@@ -5,7 +5,7 @@ import Common from '../../Utilites/Common'
 import { View } from 'react-native-animatable'
 import common from '../../Utilites/Common'
 import deviceInfoModule, { getUniqueId } from 'react-native-device-info'
-import network, { getMenu, getScreens, authUser, registerUser, getFavors } from '../../Utilites/Network'
+import network, { getMenu, getScreens, authUser, registerUser, getFavors, getTariffs } from '../../Utilites/Network'
 import { observer } from 'mobx-react-lite'
 import FastImage from 'react-native-fast-image'
 import * as RNIap from 'react-native-iap'
@@ -62,10 +62,11 @@ export const SplashScreen = observer(({navigation}) => {
       newToken = await AsyncStorage.getItem('token')
       setToken(newToken)
       network.setUniqueId()
-      await getScreens().then(async (items) => {
+      await authUser()
+      await getScreens()
+      await getTariffs().then(async (items) => {
         await initSubs(items)
       })
-      await authUser()
       await getMenu().then(async () => {
         const urls = []
         for (let i = 0; i < network.dayDishes.length; i++) {
@@ -142,7 +143,6 @@ export const SplashScreen = observer(({navigation}) => {
   }, [animDone, funcDone])
 
   const initSubs = async (items) => {
-  //   // if(Object.keys(network.subscriptions).length){
     try {
       await RNIap.initConnection()
       await RNIap.getProducts(items).then((products) => console.warn('products: '+JSON.stringify(products)))
