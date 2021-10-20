@@ -1,8 +1,8 @@
 import React, { Component, useRef,useState,useEffect } from 'react'
-import { StyleSheet, Text, View,SafeAreaView, Dimensions, Image,Animated as ReactAnimated, StatusBar, Platform, BackHandler,TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View,SafeAreaView, Dimensions, Image,Animated as ReactAnimated, StatusBar, Platform, BackHandler,TouchableOpacity, NativeModules } from 'react-native'
 import { FlatList, ScrollView } from 'react-native-gesture-handler'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
-import network from '../../Utilites/Network'
+import network, { getRecipe } from '../../Utilites/Network'
 import RecipeOfTheDay from '../components/ReceptDayScreen/RecipeOfTheDay'
 import common from '../../Utilites/Common'
 import { getStatusBarHeight } from 'react-native-iphone-x-helper'
@@ -10,6 +10,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import Animated from 'react-native-reanimated';
 import FlashMessage,{ showMessage, hideMessage } from "react-native-flash-message"
 import GestureRecognizer from 'react-native-swipe-gestures'
+import OneSignal from 'react-native-onesignal'
 
 const ReceptDayScreen = observer(({navigation}) => {
 
@@ -17,6 +18,7 @@ const ReceptDayScreen = observer(({navigation}) => {
     const [page, setPage] = useState(0)
     const [stop, setstop] = useState(false)
     const screens = []
+    const RNIapModule = NativeModules.RNIapModule
 
     for (let i = 0; i < network.dayDishes.length; i++) {
         screens.push(i * screenHeight)
@@ -38,7 +40,12 @@ const ReceptDayScreen = observer(({navigation}) => {
             //         {network.dayDishes[i]?.eating} дня
             //     </Text>
             // </View>
-            <View style={{width:4,borderRadius:4,backgroundColor:'#FFF',height: i == page ? 12 : 4,marginTop:4}} key={network.dayDishes[i].id} />
+            <View style={{width:4,borderRadius:4,backgroundColor:'#FFF',
+                    height: i == page ? 12 : 4,
+                    opacity:i == page ? 1 : 0.5,
+                    marginTop:4
+                }} key={network.dayDishes[i].id}
+            />
         )
     }
 
@@ -73,11 +80,35 @@ const ReceptDayScreen = observer(({navigation}) => {
         return onBlur;
     }, [navigation]);
 
+    useEffect(() => {
+        OneSignal.setNotificationOpenedHandler(openResult => {
+            let data = openResult?.notification?.additionalData;
+            if(Object.keys(data).length){
+                console.log("OneSignal: notification opened:", data);
+                if(data.type == 'paywall'){
+                    navigation.navigate('PayWallScreen',{data:network.paywalls[data.name]})
+                } else if (data.type == 'banner'){
+                    let banner = network.banner1.type == data.name ? network.banner1 : 
+                                 network.banner2.type == data.name ? network.banner2 : null 
+                    banner ? navigation.navigate('HolidayMenuScreen',{data:banner.recipes,bgImg:banner?.image_inner?.big_webp,description:banner?.description,title:banner?.title}) : null
+                } else if (data.type == 'recipe'){
+                    getRecipe(data.recipe_url).then((recipe) => {
+                        navigation.navigate('ReceptScreen',{rec:recipe})
+                    })
+                } else if (data.type == 'list'){
+                    navigation.navigate('ListScreen')
+                } else if (data.type == 'favorite'){
+                    navigation.navigate('FavoriteScreen')
+                }
+            }
+        });
+    }, [])
+
     return (
         <>
         <View style={{flexDirection:'row',position:'absolute',right:0,zIndex:10,top:getStatusBarHeight()}}>
             <TouchableOpacity style={{padding:16}} onPress={() => navigation.navigate('MenuScreen')} activeOpacity={1}>
-                <Image style={{width:16,height:16}} source={require('../../assets/icons/close.png')} />
+                <Image style={{width:18,height:18}} source={require('../../assets/icons/close.png')} />
             </TouchableOpacity>
         </View>
         <FlatList
@@ -106,7 +137,11 @@ const ReceptDayScreen = observer(({navigation}) => {
                 renderItem={({item,index}) => <RecipeOfTheDay recept={item} onPress={() => openRec(item)} blur={Platform.OS == 'ios' && !isFocused}
                 onSwipeUp={() => index + 1 == network.dayDishes.length ? navigation.navigate('MenuScreen') : null}/>}
         />
-        <View style={{position:'absolute',bottom:common.getLengthByIPhone7(195),paddingLeft:16,}}>
+        <View style={{
+            position:'absolute',
+            bottom:167,
+            paddingLeft:16
+        }}>
             {titles}
         </View>
         {/* <ReactAnimated.View style={{width:'100%',height:screenHeight,position:'absolute',backgroundColor:'#000',opacity:fadeAnim,

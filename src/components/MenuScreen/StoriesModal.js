@@ -35,7 +35,7 @@ export const StoriesModal = observer(({modal, closeModal, stop, setStop,currentP
         setTimeout(() => {
             scroll.current != undefined && scroll.current != null ? scroll.current.scrollTo({x: SCREEN_WIDTH * currentPage, y: 0, animated: false}) : null
         }, 100);  
-        StatusBar.setHidden(modal)
+        // StatusBar.setHidden(modal)
         // if (modal){
         //     if(Platform.OS === "android") {
         //         StatusBar.setBackgroundColor('black', true);
@@ -55,14 +55,14 @@ export const StoriesModal = observer(({modal, closeModal, stop, setStop,currentP
 
 
   return (
+    <>
     <Modal
         animationType='fade'
-        transparent={true}
+        transparent={true} statusBarTranslucent
         visible={modal}
         onRequestClose={() => closeModal()}
         propagateSwipe={true}
         >   
-        {/* <SafeAreaView /> */}
             <ScrollView contentContainerStyle={{flex:1, backgroundColor:'#000'}} 
                 scrollEnabled={!network.fullStoryText}
                 style={{backgroundColor:'#000'}} 
@@ -75,7 +75,8 @@ export const StoriesModal = observer(({modal, closeModal, stop, setStop,currentP
                 scrollEventThrottle={8}
                 pagingEnabled={true}
                 disableIntervalMomentum={true}
-                decelerationRate={0}
+                decelerationRate={Platform.select({ ios: 'fast', android: 0.8})}
+                // decelerationRate={0}
                 snapToInterval={common.getLengthByIPhone7(0)-common.getLengthByIPhone7(32)}
                 // snapToAlignment={"center"}
                 snapToOffsets={screens}
@@ -96,6 +97,7 @@ export const StoriesModal = observer(({modal, closeModal, stop, setStop,currentP
             </ScrollView>
             </ScrollView>
     </Modal>
+    </>
   )
 })
 

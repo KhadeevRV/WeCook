@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     fontSize:16,
     lineHeight:19,
     fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }),
-    fontWeight:Platform.select({ ios: '800', android: 'bold' }),
+    fontWeight:Platform.select({ ios: '800', android: 'bold' }),top:2
   }
 })
 

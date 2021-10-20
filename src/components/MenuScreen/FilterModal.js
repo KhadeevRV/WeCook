@@ -81,19 +81,20 @@ export const FilterModal = observer(({modal, closeModal,allFilters,currentFilter
 
 const styles = StyleSheet.create({
     title:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',
+        fontSize:16,
         alignSelf:'center',
         lineHeight:19,
-        marginBottom:common.getLengthByIPhone7(22),
+        marginBottom:21,
         color:Colors.textColor,
         fontWeight:'bold'
     },
     mainBlock:{
         backgroundColor:'#FFF',
         paddingBottom:8 + getBottomSpace(),
-        paddingTop:common.getLengthByIPhone7(22),
-        borderTopStartRadius:common.getLengthByIPhone7(24),
-        borderTopEndRadius:common.getLengthByIPhone7(24),
+        paddingTop:22,
+        borderTopStartRadius:24,
+        borderTopEndRadius:24,
     },
     item:{
         flexDirection:'row',
@@ -103,21 +104,21 @@ const styles = StyleSheet.create({
         alignItems:'center'
     },
     itemTitle:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:common.getLengthByIPhone7(17),
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:17,
         alignSelf:'center',
-        lineHeight:common.getLengthByIPhone7(20),
+        lineHeight:20,
         color:Colors.textColor,
         fontWeight:'500'
     },
     btn:{
-        height:47,width:Dimensions.get('window').width - 20,
-        borderRadius:10,
-        marginTop:common.getLengthByIPhone7(39),
+        height:50,width:Dimensions.get('window').width - 20,
+        borderRadius:16,
+        marginTop:25,
         justifyContent:'center',alignItems:'center',
         alignSelf:'center',backgroundColor:Colors.yellow
     },
     btnText:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Medium',fontSize:16,
         alignSelf:'center',
         lineHeight:19,
         color:Colors.textColor,

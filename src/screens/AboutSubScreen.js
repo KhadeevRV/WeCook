@@ -1,5 +1,5 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
-import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, SafeAreaView, Animated, Dimensions, Alert,Share } from 'react-native'
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, SafeAreaView, Animated, Dimensions, Alert,Share, Linking } from 'react-native'
 import {FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
 import network, { getList, getUserInfo, listClear, payAppleOrAndroid } from '../../Utilites/Network'
 import { observer } from 'mobx-react-lite'
@@ -61,7 +61,26 @@ const AboutSubScreen = observer(({navigation}) => {
         });
     }
 
-    console.warn(network.user)
+    const cancelSub = () => {
+        Alert.alert(
+            'Внимание', 
+            `Вы действительно хотите отменить подписку? Ваша подписка будет активна до ${new Date(network.user?.subscription?.info?.expired)?.toLocaleDateString()}`,[{
+            text:'Отменить',
+            onPress:() => {
+                if(network.user?.subscription?.unscribe_link == 'appstore'){
+                    Linking.openURL('https://apps.apple.com/account/subscriptions')
+                } else if (network.user?.subscription?.unscribe_link == 'googleplay'){
+                    Linking.openURL('https://play.google.com/store/account/subscriptions?package=ru.foodstar.app')
+                } else {
+                    Linking.openURL(network.user?.unscribe_link)
+                }
+            }
+        },{
+            text:'Не отменять',
+            style:'cancel',
+            onPress:() => null
+        }])
+    }
 
     return (
         <View style={{flex:1,backgroundColor:'#FFF'}}>
@@ -72,7 +91,7 @@ const AboutSubScreen = observer(({navigation}) => {
                 contentContainerStyle={{paddingBottom:120}}
             >
                 <View style={styles.container}>
-                    <Text style={styles.title}>Текущая подписка</Text>
+                    <Text style={[styles.title,{marginTop:25}]}>Текущая подписка</Text>
                     <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',height:50}}>
                         <View>
                             <Text style={styles.itemTitle}>{network.user?.subscription?.plan?.name}</Text>
@@ -85,7 +104,7 @@ const AboutSubScreen = observer(({navigation}) => {
                                 justifyContent:'center',alignItems:'center',
                                 paddingVertical:5,paddingHorizontal:11,borderRadius:16
                             }} 
-                            underlayColor={'#EEEE'}
+                            underlayColor={'#EEEE'} onPress={() => cancelSub()}
                         >
                             <Text style={[styles.itemSubtitle,{color:Colors.textColor}]}>Отменить</Text>
                         </TouchableHighlight>

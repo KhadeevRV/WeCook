@@ -10,8 +10,8 @@ const ProfileItem = ({title='',subtitle='',icon=null,onPress=() => null,height=5
 
   return (
       <TouchableHighlight onPress={() => onPress()} underlayColor={null} style={{paddingHorizontal:16}}>
-          <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',height}}>
-                <View>
+        <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',height}}>
+            <View>
                 <View style={{flexDirection:'row',alignItems:'center'}}>
                     {icon ? <Image source={icon.source} style={{marginRight:13,...icon.style}} /> : null}
                     <Text style={styles.title}>{title}</Text>
@@ -19,9 +19,11 @@ const ProfileItem = ({title='',subtitle='',icon=null,onPress=() => null,height=5
                 {subtitle.length ? 
                     <Text style={styles.subtitle}>{subtitle}</Text> : null
                 }
-                </View>
-                <Image style={{width:8,height:13,transform:[{rotate:'180deg'}]}} source={require('../../../assets/icons/goBack.png')} />
-          </View>   
+            </View>
+            <Image source={require('../../../assets/icons/goDown.png')} 
+                style={{width:13,height:8,transform:[{rotate:'-90deg'}]}}
+            />
+        </View>   
       </TouchableHighlight>
     )
 }

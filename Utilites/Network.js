@@ -5,6 +5,7 @@ import {AsyncStorage, Platform,Alert} from 'react-native';
 import Config from '../src/constants/Config';
 import Rate, { AndroidMarket } from 'react-native-rate';
 import { getUniqueId } from 'react-native-device-info';
+import InAppReview from 'react-native-in-app-review';
 
 class Network {
 
@@ -14,6 +15,7 @@ class Network {
     fromSplash = false;
     onboarding = {};
     deviceId = null;
+    pushId = null;
     tokenType = '';
     access_token = null;
     user = {};
@@ -27,6 +29,7 @@ class Network {
     banner2 = {}
     Allstories = []
     additionMenu = []
+    history = []
     paywalls = {}
     
     getSectionsAndDayDishes(arr) {
@@ -47,7 +50,7 @@ class Network {
     }
 
     setUniqueId(){
-        let uniqueId = getUniqueId();
+        let uniqueId = getUniqueId()
         this.deviceId = uniqueId
     }
 
@@ -55,6 +58,14 @@ class Network {
         const newArr = [dish,...this.listDishes]
         this.listDishes = newArr
         listAdd(dish?.id)
+        // добавляем блюдо в историю
+        let historyDish = dish
+        historyDish.history_date = Date.now()
+        const histIndex = this.history.findIndex(item => item.id == dish.id)
+        // Проверяем, не добавлено ли оно уже сегодня и есть ли оно вообще
+        if(histIndex == -1 || new Date(this.history[histIndex]?.history_date).toLocaleDateString() != new Date().toLocaleDateString()){
+            this.history.unshift(historyDish)
+        }
     }
     deleteFromList(dish){
         const newArr = this.listDishes.filter((item) => item.id != dish.id)
@@ -90,6 +101,7 @@ class Network {
         menuIndex != -1 ? this.allDishes[menuIndex].persons = persons : null
         oldMenuIndex != -1 ? this.oldMenu[oldMenuIndex].persons = persons : null
         favorIndex != -1 ? this.favorDishes[favorIndex].persons = persons : null
+        setRecipePersons(id,persons)
         if(listIndex != -1){
             const newDish = this.listDishes[listIndex]
             newDish.persons = persons
@@ -109,6 +121,28 @@ class Network {
         }
         for (let i = 0; i < this.listDishes.length; i++) {
             this.listDishes[i].persons = persons
+        }
+    }
+
+    rateApp(){
+        if(InAppReview.isAvailable()){
+            InAppReview.RequestInAppReview().then((hasFlowFinishedSuccessfully) => {
+                // when return true in android it means user finished or close review flow
+                console.log('InAppReview in android', hasFlowFinishedSuccessfully);
+
+                // when return true in ios it means review flow lanuched to user.
+                console.log(
+                'InAppReview in ios has launched successfully',
+                hasFlowFinishedSuccessfully,
+                );
+                if (hasFlowFinishedSuccessfully) {
+                // do something for ios
+                // do something for android
+                }
+            })
+            .catch((error) => {
+            console.log(error);
+            });
         }
     }
    
@@ -131,8 +165,9 @@ export function authUser() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
         },
-        body: JSON.stringify({"device_id" : network.deviceId}) 
+        body: JSON.stringify({"device_id" : network.deviceId,"push_id":network.pushId}) 
         })
         .then(response =>{
         response.json().then(data => {
@@ -406,8 +441,56 @@ export function listClear() {
         .then(response =>{
             response.json().then(data => {
             console.warn('listClear: ' + JSON.stringify(data));
-            if (data.id) {
+            if (data.status == 'ok') {
                 resolve() 
+            }
+            else {     
+                reject(data.error)
+            }
+        }).catch(err =>{
+            console.warn(err);
+            reject();
+            })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getHistory(page=1) {
+    console.warn('page',page)
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `list/history?page=${page}`,{
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getHistory: ' + JSON.stringify(data));
+            if (data.data) {
+                mobx.runInAction(() => {
+                    if(page == 1){
+                        network.history = data.data
+                    } else if(data.data.length) {
+                        // Производим сортировку чтобы проверить, есть ли повторяющиеся блюда с одной и той же датой
+                        for (let i = 0; i < data.data.length; i++) {
+                            const newDish = data.data[i]
+                            const alreadyHave = network.history.filter(item => item.id == newDish.id)
+                            let needToAdd = true
+                            for (let i = 0; i < alreadyHave.length; i++) {
+                                new Date(newDish.history_date).toLocaleDateString() == new Date(alreadyHave[i]?.history_date).toLocaleDateString() ? needToAdd = false : null
+                            }
+                            needToAdd ? network.history.push(newDish) : null
+                        }
+                    }
+                })
+                data.links.next ? resolve(true) : resolve(null)
             }
             else {     
                 reject(data.error)
@@ -650,6 +733,117 @@ export function sendCode(phone,code) {
         })
         .catch(err =>{
         console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getRecipe(url) {
+    return new Promise(function(resolve,reject){
+        fetch(url,{
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getRecipe: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve(data.data) 
+            }
+            else {     
+                reject(data.error)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getSocials() {
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `for-contacts`,{
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getSocials: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve(data.data) 
+            }
+            else {     
+                reject(data.message)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function setRecipePersons(recipe_id,perons) {
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `recipes/${recipe_id}/set-person`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        body:JSON.stringify({perons})
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getSocials: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve(data.data) 
+            }
+            else {     
+                reject(data.message)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function iSeeYourDaddy(id) {
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `stories/viewed/${id}`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('iSeeYourDaddy: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve()
+            }
+            else {     
+                reject()
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err); 
         reject('Unknown error.Try again later.');
         })
     })

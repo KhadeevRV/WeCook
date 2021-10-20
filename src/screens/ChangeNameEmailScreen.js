@@ -15,6 +15,7 @@ const ChangeNameEmailScreen = observer(({navigation,route}) => {
     const what = route?.params?.what
 
     const [inputValue, setInputValue] = useState('')
+    const [inputColor, setinputColor] = useState('#F5F5F5')
 
     const save = () => {
         runInAction(() => network.user[what] = inputValue)
@@ -33,9 +34,11 @@ const ChangeNameEmailScreen = observer(({navigation,route}) => {
         <SafeAreaView />
         <SkipHeader title={what == 'name' ? 'Имя' : 'Email'} withSkip={false} goBack={() => navigation.goBack()} />
         <ScrollView style={{backgroundColor:'#FFF'}}>
-            <View style={{paddingHorizontal:16}}>
+            <View style={{paddingHorizontal:16,paddingTop:8}}>
                 <TextInput 
-                    style={styles.input}
+                    style={[styles.input,{backgroundColor:inputColor}]}
+                    onFocus={() => setinputColor('#EEEEEE')}
+                    onBlur={() => setinputColor('#F5F5F5')}
                     selectionColor={Colors.textColor}
                     value={inputValue} keyboardType={what == 'email' ? 'email-address' : 'default'}
                     onChangeText={(text) => what == 'email' ? setInputValue(text.replace(/\s/g, '')) : setInputValue(text)}
@@ -45,11 +48,11 @@ const ChangeNameEmailScreen = observer(({navigation,route}) => {
         </ScrollView>
         <View style={{paddingHorizontal:8,paddingTop:13,paddingBottom:8,justifyContent:'flex-end',backgroundColor:'#FFF'}}>
                 <Btn 
-                    title={'Продолжить'} 
-                    // title={'Получить код'} 
+                    title={'Сохранить'} 
                     onPress={() => save()}
                     // onPress={() => navigation.navigate('SendSmsScreen'),{fromProfile}}
                     backgroundColor={Colors.yellow} underlayColor={Colors.underLayYellow} 
+                    customTextStyle={{fontSize:16,lineHeight:19}}
                     disabled={what == 'email' ? !common.validMail(inputValue) : inputValue.length < 2} 
                 />
         </View>

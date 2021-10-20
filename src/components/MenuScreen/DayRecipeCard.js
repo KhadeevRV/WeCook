@@ -20,14 +20,18 @@ const ImageView = ({uri,onPress,vertical}) => {
         {Platform.OS == 'ios' ? 
         <FastImage source={{uri}}
                 style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
-                height:common.getLengthByIPhone7(176)}}
+                height:vertical ? 192 : 176
+            }}
         />
         : <Image source={{uri}}
         style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
-            height:common.getLengthByIPhone7(176)}}/>}
+                height:vertical ? 192 : 176
+            }}/>}
     </TouchableOpacity>
     )
 }
+
+// recept - сам рецепт, onPress - нажатие на рецепт, listHandler - хендлер нажатия на иконку списка,если vertical false - рецепты дня
 
 const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => {
 
@@ -46,9 +50,9 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                 style={{
                 position: "absolute",
                 top: 0,left: 0,bottom: 0,right: 0,
-                borderRadius:17
+                borderRadius:17,
                 }}
-                blurType="light"
+                blurType="xlight"
                 blurAmount={24}
                 blurRadius={24}
                 reducedTransparencyFallbackColor={'#FFF'}
@@ -72,16 +76,16 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
         </View>
     ]
     const [refresh, setRefresh] = useState(false)
-    const images = [<ImageView key={recept?.images?.id} uri={recept?.images?.middle_webp} vertical={vertical} onPress={() => onPress()} />]
+    const images = [<ImageView key={recept?.images?.id} uri={recept?.images?.big_webp} vertical={vertical} onPress={() => onPress()} />]
 
     const dots = [<View style={{width:0 == page ? 12 : 4,height:4,borderRadius:4,backgroundColor:'#FFF',opacity:0 == page ? 1 : 0.5,marginRight:4}} key={123} />]
     const screens = []
-    const stepsWithImage = recept?.steps.filter((step) => step?.images?.middle_webp)
+    const stepsWithImage = recept?.steps.filter((step) => step?.images?.big_webp)
     for (let i = 0; i < stepsWithImage.length; i++) {
         const step = stepsWithImage[i]
         i != 0 ? screens.push(i * (common.getLengthByIPhone7() - 32)) : null
         images.push(
-            <ImageView key={step?.id} uri={step?.images?.middle_webp} vertical={vertical} onPress={() => onPress()} />
+            <ImageView key={step?.id} uri={step?.images?.big_webp} vertical={vertical} onPress={() => onPress()} />
         )
         dots.push(
             <View style={{width:i + 1 == page ? 12 : 4,height:4,borderRadius:4,backgroundColor:'#FFF',
@@ -97,14 +101,17 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                 height: 4,
             },
             shadowOpacity: 0.06,
-            shadowRadius: 14,
+            shadowRadius: 4,
         }}>
         <TouchableOpacity onPress={() => onPress()} activeOpacity={1}
         style={{...styles.card,width:vertical ? '100%' : common.getLengthByIPhone7(304),
-            marginBottom:vertical ? 20 : 0}}>
+            marginBottom:vertical ? 20 : 0}}
+            // onLayout={(e) => console.warn(e.nativeEvent.layout.height)}
+        >
         <View 
             style={{
-                width:'100%',height:common.getLengthByIPhone7(176),
+                width:'100%',
+                height: vertical ? 192 : 176,
                 justifyContent:'space-between'}} 
         >
             <View style={{borderTopRightRadius:16,borderTopLeftRadius:16,overflow:'hidden'}}>
@@ -128,16 +135,6 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                         }
                     }, 100);
                 }}
-                // keyExtractor={({item}) => item?.key}
-                // data={imagesArr}
-                // initialNumToRender={2}
-                // extraData={imagesArr}
-                // renderItem={({item}) => (
-                //     <FastImage source={{uri:item.uri,priority:FastImage.priority.low}}
-                //         style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
-                //         height:common.getLengthByIPhone7(176)}}
-                //     />
-                // )}
             >
                 {images}
             </ScrollView>
@@ -154,7 +151,7 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                 }}
             >
                 <Image style={{width:vertical ? 20 : 18,height:vertical ? 17 : 18}} source={vertical ? require('../../../assets/icons/hat.png') : require('../../../assets/icons/star.png')} />
-                <Text style={styles.timeText}>{recept?.eating}</Text>
+                <Text style={styles.timeText}>{recept?.eating}{vertical ? '' : ' дня'}</Text>
                 <Image style={{width:17,height:17,marginLeft:12}} source={require('../../../assets/icons/clock.png')} />
                 <Text style={styles.timeText}>{recept?.cook_time} м.</Text>
                 {recept?.labels?.keto ? 
@@ -176,8 +173,10 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                 </> : null}
             </View>
         </View>
-        <View style={{height:56,justifyContent:'center'}}>
-            <Text style={styles.title} numberOfLines={2}>{recept?.name}</Text>
+        <View style={{height:vertical ? 64 : 56,justifyContent:'center'}}>
+            <Text style={styles.title} numberOfLines={2}>
+                {recept?.name}
+            </Text>
         </View>
         </TouchableOpacity>
         </View>
@@ -200,12 +199,12 @@ const styles = StyleSheet.create({
         shadowRadius: 8,elevation:10
     },
     title:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:14,
         lineHeight:17,paddingHorizontal:16,
         color:Colors.textColor
     },
     timeText:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:13,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:13,
         lineHeight:18,
         fontWeight:'500',
         color:'#FFF',marginLeft:4

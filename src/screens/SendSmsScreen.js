@@ -14,7 +14,10 @@ import Spinner from 'react-native-loading-spinner-overlay'
 const SendSmsScreen = observer(({navigation,route}) => {
 
     const [code, setCode] = useState('')
-    const {from,phone,exit} = route?.params
+    const from = route.params?.from
+    const phone = route.params?.phone
+    const exit = route.params?.exit
+    
     const [loading, setloading] = useState(false)
     const [inputColor, setinputColor] = useState('#F5F5F5')
 

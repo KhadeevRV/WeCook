@@ -5,7 +5,7 @@ import Common from '../../Utilites/Common'
 import { View } from 'react-native-animatable'
 import common from '../../Utilites/Common'
 import deviceInfoModule, { getUniqueId } from 'react-native-device-info'
-import network, { getMenu, getScreens, authUser, registerUser, getFavors, getTariffs } from '../../Utilites/Network'
+import network, { getMenu, getScreens, authUser, registerUser, getFavors, getTariffs, getHistory } from '../../Utilites/Network'
 import { observer } from 'mobx-react-lite'
 import FastImage from 'react-native-fast-image'
 import * as RNIap from 'react-native-iap'
@@ -20,6 +20,10 @@ import {
   purchaseUpdatedListener,
 } from 'react-native-iap';
 import { runInAction } from 'mobx'
+import LinearGradient from 'react-native-linear-gradient'
+import { getBottomSpace, getStatusBarHeight } from 'react-native-iphone-x-helper'
+import OneSignal from 'react-native-onesignal'
+import { getTrackingStatus, requestTrackingPermission } from 'react-native-tracking-transparency';
 
 function useInterval(callback, delay) {
   const savedCallback = useRef();
@@ -56,10 +60,25 @@ export const SplashScreen = observer(({navigation}) => {
     }
   }
 
+  const getStatus = async () => {
+    const tracking = await requestTrackingPermission();
+    console.warn('tracking',tracking)
+  }
+
   const [token, setToken] = useState(null)
   const goToMain = async () => {
+    OneSignal.setLogLevel(6, 0);
+    OneSignal.setAppId("50273246-c3e6-4670-b829-3e51d4b24b51");
+    OneSignal.promptForPushNotificationsWithUserResponse(response => {
+      console.log("Prompt response:", response);
+    });
+    getStatus()
+    const deviceInfo = await OneSignal.getDeviceState()
+    console.warn('deviceInfooo',deviceInfo)
+    runInAction(() => network.pushId = deviceInfo.userId)
     try {
       newToken = await AsyncStorage.getItem('token')
+      console.warn('object',newToken)
       setToken(newToken)
       network.setUniqueId()
       await authUser()
@@ -79,6 +98,7 @@ export const SplashScreen = observer(({navigation}) => {
           // continue
         }
         await getFavors()
+        await getHistory()
         setFuncDone(true)
       }) 
     } catch (e) {
@@ -88,55 +108,45 @@ export const SplashScreen = observer(({navigation}) => {
     }
   }
 
-//   const checkATT = async () => {
-//     const trackingStatus = await requestTrackingPermission()
-//   }
-
   useEffect(() => {
     goToMain()
   }, [])
+
+  const imgs = [
+    {
+      id:1,url:require('../../assets/img/splashScreen/plate1.png')
+    },{
+      id:2,url:require('../../assets/img/splashScreen/plate2.png')
+    },{
+      id:3,url:require('../../assets/img/splashScreen/plate3.png')
+    },{
+      id:4,url:require('../../assets/img/splashScreen/plate4.png')
+    },
+  ]
+
   const [err, setErr] = useState(false)
   const [stop, setStop] = useState(false)
-  const [progress, setProgress] = useState(0);
   const [animDone, setAnimDone] = useState(false)
   const [funcDone, setFuncDone] = useState(false)
-  let animation = useRef(new Animated.Value(0));
-
-  const delay = Platform.OS == 'ios' ? 45 : 100
+  const [currentPlate, setCurrentPlate] = useState(0)
+  const delay =  1000
 
   useInterval(() => {
     if(!stop){
-      setProgress(progress + 2)
-      if (progress > Platform.select({ ios: 120, android: 60 })) {
+      if(funcDone && animDone){
         setStop(true)
-        setAnimDone(true)
+      } else {
+        currentPlate + 1 == imgs.length ? setCurrentPlate(0) : setCurrentPlate(prev => prev + 1)
+        currentPlate + 2 == imgs.length ? setAnimDone(true) : null
+        // if(currentPlate + 1 == imgs.length){
+        //   setAnimDone(true)
+        //   setCurrentPlate(0)
+        // } else {
+        //   setCurrentPlate(prev => prev + 1)
+        // } 
       }
-    } 
+    }
   }, delay);
-
-  let btnAnim = useRef(new Animated.Value(90)).current;
-  let textAnim = useRef(new Animated.Value(0)).current;
-  const [stopBtnAnim, setStopBtnAnim] = useState(false)
-  const [stopTextAnim, setStopTextAnim] = useState(false)
-
-  useEffect(() => {
-    if(progress > Platform.select({ ios: 80, android: 40 }) && !stopTextAnim){
-      setStopTextAnim(true)
-      Animated.timing(textAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true
-      }).start(); 
-    }
-    if (progress > Platform.select({ ios: 50, android: 25 }) && !stopBtnAnim){
-      setStopBtnAnim(true)
-      Animated.timing(btnAnim, {
-        toValue: -12,
-        duration: 500,
-        useNativeDriver: true
-      }).start(); 
-    }
-  },[progress])
 
   useEffect(() => {
     allDone()
@@ -166,45 +176,50 @@ export const SplashScreen = observer(({navigation}) => {
     );
   }
 
-  // useEffect(() => {
-  //   const onFocus = navigation.addListener('focus', () => {
-  //     if(Platform.OS == 'android'){
-  //       StatusBar.setBackgroundColor('#FFFDC7', true);
-  //     }
-  //   });
-  //   return onFocus;
-  // }, [navigation]);
-  // useEffect(() => {
-  //   const onBlur = navigation.addListener('blur', () => {
-  //     if(Platform.OS == 'android'){
-  //       StatusBar.setBackgroundColor('#FFF', true);
-  //     }
-  //   });
-  //   return onBlur;
-  // }, [navigation]);
+  useEffect(() => {
+    const onFocus = navigation.addListener('focus', () => {
+      if(Platform.OS == 'android'){
+        StatusBar.setBackgroundColor('rgba(255, 230, 100, 1)', true);
+      }
+    });
+    return onFocus;
+  }, [navigation]);
+  useEffect(() => {
+    const onBlur = navigation.addListener('blur', () => {
+      if(Platform.OS == 'android'){
+        StatusBar.setBackgroundColor('#FFF', true);
+      }
+    });
+    return onBlur;
+  }, [navigation]);
 
   return (
     <>
-      <View style={{flex:1,justifyContent:'center',alignItems:'center',backgroundColor:'#FFF'}}>
-        <View style={{width:'100%',alignItems:'center',flexDirection:'row',justifyContent:'center'}}>
-          <Animated.Image style={{width:70,height:70,transform: [{ translateX: btnAnim}]}} 
-            source={require('../../assets/img/splashIcon.png')} />
-          <Animated.Image style={{width:168,height:24, opacity:textAnim}}
-            source={require('../../assets/img/name.png')} />
-        </View>
-        <Text allowFontScaling={false} style={{
-        //   fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',
-          fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:11,
-          lineHeight:15,
-          letterSpacing:3,
-          color:'#A7A7A7',
-          fontWeight:'bold',
-          position:'absolute',bottom:33,
-        }}>ГОТОВИТЬ ДОМА ПРОСТО</Text>
-        {/* <Image style={{width:common.getLengthByIPhone7(231),height:common.getLengthByIPhone7(127),}}
-            source={require('../../assets/img/splashLogo.png')} /> */}
-      </View>
-      <SafeAreaView backgroundColor={"#FFF"}/>
+      <LinearGradient 
+        colors={['rgba(255, 230, 100, 1)', `rgba(238, 195, 45, 1)`]} 
+        style={{flex:1,alignItems:'center'}}
+      >
+        <Image style={{width:84,height:84,marginTop:94 + getStatusBarHeight(),marginBottom:17}} 
+          source={require('../../assets/img/splashLogo.png')}
+        />
+        <Image style={{width:144,height:27}} 
+          source={require('../../assets/img/splashText.png')}
+        />
+        <Image source={imgs[currentPlate].url} 
+          style={{
+            width:common.getLengthByIPhone7(),height:common.getLengthByIPhone7(),
+            position:'absolute',bottom:34 + getBottomSpace()
+          }}
+        />
+        <Text style={{
+          fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
+          fontWeight:'500',
+          lineHeight:19,color:'#FFF',
+          position:'absolute',bottom:34 + getBottomSpace(),
+        }}>
+          Всегда знаешь, что приготовить
+        </Text>
+      </LinearGradient>
     </>
   )
 })

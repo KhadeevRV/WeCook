@@ -12,13 +12,19 @@ import FavorItem from '../components/FavoriteScreen/FavorItem'
 import network from '../../Utilites/Network'
 import {captureScroll, getSpoingyTransform} from "../animations/SpoingyHelpers"
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import BottomListBtn from '../components/BottomListBtn'
 
 
 const HolidayMenuScreen = observer(({navigation,route}) => {
-    const headerHeight = 300
+    const headerHeight = 228 + getStatusBarHeight()
     const scrollY = useRef(new Animated.Value(0)).current
     const body = []
-    const {data,bgImg,description,title} = route.params
+    const data = route.params?.data
+    const bgImg = route.params?.bgImg
+    const description = route.params?.description
+    const title = route.params?.title
+    const statusHeight = getStatusBarHeight()
+    console.warn(data)
     const header = [
         <View style={[styles.header,{top:useSafeAreaInsets().top}]}>
             <TouchableOpacity activeOpacity={1} 
@@ -27,10 +33,18 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
                 <Image source={require('../../assets/icons/goBack.png')} style={{width:11,height:18,tintColor:Colors.textColor}} />
             </TouchableOpacity>
             <Animated.Text style={{...styles.headerTitle,
-                opacity:scrollY.interpolate({inputRange:[0,209,225],outputRange:[0,0,1],extrapolate:'extend'})}}
+                opacity:scrollY.interpolate({inputRange:[0,167 - statusHeight,183 - statusHeight],
+                    outputRange:[0,0,1],extrapolate:'extend'})
+                }}
             >
                 {title}
             </Animated.Text>
+            <TouchableOpacity activeOpacity={1} 
+                style={{position:'absolute',right:0,paddingVertical:12,paddingHorizontal:16,zIndex:100}} 
+                onPress={() => navigation.goBack()}
+            >
+                <Image source={require('../../assets/icons/share.png')} style={{width:18,height:22,tintColor:Colors.textColor}} />
+            </TouchableOpacity>
         </View>
     ]
 
@@ -58,8 +72,10 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
         const rec = data[i]
         body.push(
             <View key={rec?.id}>
-                <FavorItem recept={rec} onPress={() => openRec(rec)} listHandler={(isInList,recept) => listHandler(isInList,recept)} />
-                <Text style={styles.subtitle}>Лето - прекрасная жаркая пора и в эту самую пору хочется баловать себя вкусной и полезной едой. Мы разработали меню, </Text>
+                <FavorItem recept={rec} onPress={() => openRec(rec)} listHandler={(isInList,recept) => listHandler(isInList,recept)} 
+                    fromHoliday />
+                {rec?.description ? 
+                <Text style={styles.subtitle}>{rec.description}</Text> : null}
             </View>
         )
     }
@@ -93,7 +109,8 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
             {header}
             <Animated.View style={{height:44 + useSafeAreaInsets().top,backgroundColor:'#FFF',width:'100%',
                 position:'absolute',zIndex:5,
-                opacity:scrollY.interpolate({inputRange:[0,200,210],outputRange:[0,0,1],extrapolate:'extend'})}}
+                opacity:scrollY.interpolate({inputRange:[0,128 - statusHeight,138 - statusHeight],
+                        outputRange:[0,0,1],extrapolate:'extend'})}}
             />
             <Animated.ScrollView {...captureScroll(scrollY)} showsVerticalScrollIndicator={false}>
                 <Animated.Image
@@ -110,25 +127,7 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
                     {body}
                 </View>
             </Animated.ScrollView>
-            {network.listDishes.length ? 
-            <View style={{padding:8,backgroundColor:"#FFF",paddingBottom:getBottomSpace() + 8}}>
-                <TouchableHighlight onPress={() => navigation.navigate('ListScreen')}
-                    style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16,}} 
-                    underlayColor={Colors.underLayYellow}>
-                    <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
-                        <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
-                    </View>
-                    <Text style={{...styles.headerSubitle,fontWeight:'500'}}>Рецепт в списке</Text>
-                    </View>
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                        <Image source={require('../../assets/icons/listMenu.png')} style={{width:23,height:21,marginRight:5}} />
-                        <Text style={styles.timeText}>от 2 ч.</Text>
-                    </View>
-                    </View>
-                </TouchableHighlight>
-            </View> : null}
+            {network.listDishes.length ? <BottomListBtn navigation={navigation} />  : null}
         </View>
     )
 })
@@ -161,6 +160,6 @@ const styles = StyleSheet.create({
     subtitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
         lineHeight:17,
-        color:Colors.textColor,marginBottom:common.getLengthByIPhone7(40)
+        color:Colors.textColor,marginBottom:38
     }
 })

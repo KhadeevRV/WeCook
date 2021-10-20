@@ -11,7 +11,7 @@ import { observer } from 'mobx-react-lite'
 import DropShadow from 'react-native-drop-shadow'
 import network from '../../../Utilites/Network'
 
-const FavorItem = observer(({recept,onPress,listHandler}) => {
+const FavorItem = observer(({recept,onPress,listHandler,fromHoliday=false}) => {
 
     const isInList = !!network.listDishes.filter((item) => item.id == recept.id).length
     
@@ -29,7 +29,7 @@ const FavorItem = observer(({recept,onPress,listHandler}) => {
                 top: 0,left: 0,bottom: 0,right: 0,
                 borderRadius:17
                 }}
-                blurType="light"
+                blurType="xlight"
                 blurAmount={24}
                 blurRadius={24}
                 reducedTransparencyFallbackColor={'#FFF'}
@@ -73,10 +73,10 @@ const FavorItem = observer(({recept,onPress,listHandler}) => {
                 height: 4,
             },
             shadowOpacity: 0.06,
-            shadowRadius: 14,
+            shadowRadius: 8,
         }}>
         <TouchableOpacity onPress={() => onPress()} activeOpacity={1}
-        style={{...styles.card}}>
+        style={[styles.card,{marginBottom:fromHoliday ? 16 : 20,}]}>
             <FastImage source={{uri:recept?.images?.big_webp,}} key={recept?.images?.big_webp} 
                 style={{width:common.getLengthByIPhone7() - 32,borderTopLeftRadius:16,borderTopRightRadius:16,justifyContent:'flex-end',
                 height:common.getLengthByIPhone7(192)}}
@@ -122,7 +122,7 @@ export default FavorItem
 const styles = StyleSheet.create({
     card:{
         backgroundColor:'#FFF',
-        borderRadius:16,marginBottom:20,
+        borderRadius:16,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
@@ -132,8 +132,9 @@ const styles = StyleSheet.create({
         shadowRadius: 8,elevation:10
     },
     title:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:14,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:14,
         lineHeight:17,paddingHorizontal:16,
+        fontWeight:'500',
         color:Colors.textColor,maxWidth:common.getLengthByIPhone7() - 64
     },
     timeText:{

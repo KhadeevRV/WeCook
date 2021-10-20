@@ -1,4 +1,4 @@
-package com.foodly;
+package app.wecook;
 
 import com.facebook.react.ReactActivity;
 

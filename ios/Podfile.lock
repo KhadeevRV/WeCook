@@ -11,16 +11,32 @@ PODS:
     - React-Core (= 0.64.2)
     - React-jsi (= 0.64.2)
     - ReactCommon/turbomodule/core (= 0.64.2)
+  - FBSDKCoreKit (9.3.0):
+    - FBSDKCoreKit/Basics (= 9.3.0)
+    - FBSDKCoreKit/Core (= 9.3.0)
+  - FBSDKCoreKit/Basics (9.3.0)
+  - FBSDKCoreKit/Core (9.3.0):
+    - FBSDKCoreKit/Basics
+  - FBSDKLoginKit (9.3.0):
+    - FBSDKLoginKit/Login (= 9.3.0)
+  - FBSDKLoginKit/Login (9.3.0):
+    - FBSDKCoreKit (~> 9.3.0)
+  - FBSDKShareKit (9.3.0):
+    - FBSDKShareKit/Share (= 9.3.0)
+  - FBSDKShareKit/Share (9.3.0):
+    - FBSDKCoreKit (~> 9.3.0)
   - glog (0.3.5)
-  - libwebp (1.2.0):
-    - libwebp/demux (= 1.2.0)
-    - libwebp/mux (= 1.2.0)
-    - libwebp/webp (= 1.2.0)
-  - libwebp/demux (1.2.0):
+  - libwebp (1.2.1):
+    - libwebp/demux (= 1.2.1)
+    - libwebp/mux (= 1.2.1)
+    - libwebp/webp (= 1.2.1)
+  - libwebp/demux (1.2.1):
     - libwebp/webp
-  - libwebp/mux (1.2.0):
+  - libwebp/mux (1.2.1):
     - libwebp/demux
-  - libwebp/webp (1.2.0)
+  - libwebp/webp (1.2.1)
+  - OneSignal (3.8.1)
+  - OneSignalXCFramework (3.8.1)
   - Permission-AppTrackingTransparency (3.0.5):
     - RNPermissions
   - RCT-Folly (2020.01.13.00):
@@ -221,8 +237,27 @@ PODS:
   - React-jsinspector (0.64.2)
   - react-native-blur (0.8.0):
     - React
+  - react-native-fbsdk-next (4.6.0):
+    - React-Core
+    - react-native-fbsdk-next/Core (= 4.6.0)
+    - react-native-fbsdk-next/Login (= 4.6.0)
+    - react-native-fbsdk-next/Share (= 4.6.0)
+  - react-native-fbsdk-next/Core (4.6.0):
+    - FBSDKCoreKit (~> 9.3)
+    - React-Core
+  - react-native-fbsdk-next/Login (4.6.0):
+    - FBSDKLoginKit (~> 9.3)
+    - React-Core
+  - react-native-fbsdk-next/Share (4.6.0):
+    - FBSDKShareKit (~> 9.3)
+    - React-Core
+  - react-native-in-app-review (3.2.3):
+    - React
   - react-native-keep-awake (4.0.0):
     - React
+  - react-native-onesignal (4.3.1):
+    - OneSignalXCFramework (= 3.8.1)
+    - React (< 1.0.0, >= 0.13.0)
   - react-native-safe-area-context (3.3.0):
     - React-Core
   - react-native-tracking-transparency (0.1.1):
@@ -308,7 +343,7 @@ PODS:
     - SDWebImageWebPCoder (~> 0.6.1)
   - RNGestureHandler (1.10.3):
     - React-Core
-  - RNIap (5.2.14):
+  - RNIap (7.5.0):
     - React-Core
   - RNPermissions (3.0.5):
     - React-Core
@@ -324,14 +359,14 @@ PODS:
     - React-Core
   - RNSVG (12.1.1):
     - React
-  - SDWebImage (5.11.1):
-    - SDWebImage/Core (= 5.11.1)
-  - SDWebImage/Core (5.11.1)
+  - SDWebImage (5.12.0):
+    - SDWebImage/Core (= 5.12.0)
+  - SDWebImage/Core (5.12.0)
   - SDWebImageWebPCoder (0.6.1):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.7)
   - Yoga (1.14.0)
-  - YoutubePlayer-in-WKWebView (0.3.5)
+  - YoutubePlayer-in-WKWebView (0.3.7)
 
 DEPENDENCIES:
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
@@ -339,6 +374,7 @@ DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../node_modules/react-native/React/FBReactNativeSpec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
+  - OneSignal (< 4.0, >= 3.0)
   - Permission-AppTrackingTransparency (from `../node_modules/react-native-permissions/ios/AppTrackingTransparency`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
@@ -355,7 +391,10 @@ DEPENDENCIES:
   - React-jsiexecutor (from `../node_modules/react-native/ReactCommon/jsiexecutor`)
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
+  - react-native-fbsdk-next (from `../node_modules/react-native-fbsdk-next`)
+  - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
+  - react-native-onesignal (from `../node_modules/react-native-onesignal`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-tracking-transparency (from `../node_modules/react-native-tracking-transparency`)
   - react-native-video (from `../node_modules/react-native-video`)
@@ -389,7 +428,12 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - boost-for-react-native
+    - FBSDKCoreKit
+    - FBSDKLoginKit
+    - FBSDKShareKit
     - libwebp
+    - OneSignal
+    - OneSignalXCFramework
     - SDWebImage
     - SDWebImageWebPCoder
     - YoutubePlayer-in-WKWebView
@@ -433,8 +477,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/jsinspector"
   react-native-blur:
     :path: "../node_modules/@react-native-community/blur"
+  react-native-fbsdk-next:
+    :path: "../node_modules/react-native-fbsdk-next"
+  react-native-in-app-review:
+    :path: "../node_modules/react-native-in-app-review"
   react-native-keep-awake:
     :path: "../node_modules/react-native-keep-awake"
+  react-native-onesignal:
+    :path: "../node_modules/react-native-onesignal"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-tracking-transparency:
@@ -500,8 +550,13 @@ SPEC CHECKSUMS:
   DoubleConversion: cf9b38bf0b2d048436d9a82ad2abe1404f11e7de
   FBLazyVector: e686045572151edef46010a6f819ade377dfeb4b
   FBReactNativeSpec: fe567a76f453da56f41b72c28abfcffa2af17cff
+  FBSDKCoreKit: 0d1ae58388a458b8222f72025804cdc84eb5d0c3
+  FBSDKLoginKit: aea68df6121c5e165ccae2fabfdc83c4644ee40f
+  FBSDKShareKit: 70889c97c62f0c6b3ccb8b999e73a85f19024001
   glog: 73c2498ac6884b13ede40eda8228cb1eee9d9d62
-  libwebp: e90b9c01d99205d03b6bb8f2c8c415e5a4ef66f0
+  libwebp: 98a37e597e40bfdb4c911fc98f2c53d0b12d05fc
+  OneSignal: b44755cd425704bdef8d8912030ed26619446773
+  OneSignalXCFramework: cd6290d43d4f7dd0443d34e7be8b95996417644e
   Permission-AppTrackingTransparency: 9044a120c00e650227056c4c998ecca4eec595c2
   RCT-Folly: ec7a233ccc97cc556cf7237f0db1ff65b986f27c
   RCTRequired: 6d3e854f0e7260a648badd0d44fc364bc9da9728
@@ -516,7 +571,10 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 80c46bd381fd06e418e0d4f53672dc1d1945c4c3
   React-jsinspector: cc614ec18a9ca96fd275100c16d74d62ee11f0ae
   react-native-blur: cad4d93b364f91e7b7931b3fa935455487e5c33c
+  react-native-fbsdk-next: a0dd8905af573ec4d21b7bc398423ccaa2ce2b07
+  react-native-in-app-review: 23f4f5b9fcd94339dd5d93c6230557f9c67c7dda
   react-native-keep-awake: eba3137546b10003361b37c761f6c429b59814ae
+  react-native-onesignal: d8d59d8df1e47231aec95e6392fea53eb0bcbac1
   react-native-safe-area-context: 8465df05de8106c584b117f0e027e17174d6e02e
   react-native-tracking-transparency: d39c548f86b15315eb9d0532cff2a7d989085bee
   react-native-video: 1574074179ecaf6a9dd067116c8f31bf9fec15c8
@@ -537,7 +595,7 @@ SPEC CHECKSUMS:
   RNDeviceInfo: 85f751647430c4fb7e87d0e6615907087c23682c
   RNFastImage: a7384db75df352500261e8e8f1ac2026def26102
   RNGestureHandler: a479ebd5ed4221a810967000735517df0d2db211
-  RNIap: c22d7a249e35fa75f35cfaac19fd6aea012ad342
+  RNIap: f632e0685e37759e1a63651868d38fd08efe9a87
   RNPermissions: 3e5bb8afd93c787681bbacbf54d586a6272ecc92
   RNRate: e0af7e724e5fcf89578dbd22ab6395c85402ef29
   RNReactNativeHapticFeedback: 653a8c126a0f5e88ce15ffe280b3ff37e1fbb285
@@ -545,11 +603,11 @@ SPEC CHECKSUMS:
   RNScreens: f7ad633b2e0190b77b6a7aab7f914fad6f198d8d
   RNShare: 4df87d1791f50a2c7b1d89432fb9bbb7c02a9c9a
   RNSVG: 551acb6562324b1d52a4e0758f7ca0ec234e278f
-  SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
+  SDWebImage: 4ea20cca2986adc5aacde07aa686742fd4c67a37
   SDWebImageWebPCoder: d0dac55073088d24b2ac1b191a71a8f8d0adac21
   Yoga: 575c581c63e0d35c9a83f4b46d01d63abc1100ac
-  YoutubePlayer-in-WKWebView: cfbf46da51d7370662a695a8f351e5fa1d3e1008
+  YoutubePlayer-in-WKWebView: 795acdc5e27769cc647ad7f982dabc26050b47eb
 
-PODFILE CHECKSUM: 9e9f12dcbf86fc8f0eb7ca9d41e748a9625e1e6b
+PODFILE CHECKSUM: a0f783f7a53d97c8bdc3a1467833a7737d4cb63e
 
-COCOAPODS: 1.11.0
+COCOAPODS: 1.11.2

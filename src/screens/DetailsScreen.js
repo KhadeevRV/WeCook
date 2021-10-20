@@ -81,7 +81,7 @@ const DetailsScreen = observer(({navigation}) => {
                 contentContainerStyle={{paddingBottom:120}}
             >
                 <View style={styles.container}>
-                    <Text style={styles.title}>Личное</Text>
+                    <Text style={[styles.title,{marginTop:25}]}>Личное</Text>
                 </View>
                 {body}
                 <View style={styles.container}>
@@ -96,13 +96,13 @@ const DetailsScreen = observer(({navigation}) => {
                     />
                 :
                 <View style={styles.container}>
-                <TouchableOpacity style={{marginBottom:16}} activeOpacity={1}
+                <TouchableOpacity style={{marginBottom:16}} activeOpacity={1} 
                         onPress={() => navigation.navigate('PayWallScreen',{data:network.paywalls.paywall_sale})}>
                     <LinearGradient colors={['rgba(235,255,222, 1)', `rgba(167,239,255,1)`]} 
                             start={{x:0,y:1}}
                             end={{x:1,y:1}}
                             locations={[0.4,0.88]}
-                            style={{paddingHorizontal:16,paddingVertical:19,borderRadius:16}}
+                            style={{paddingHorizontal:16,paddingVertical:21,borderRadius:16}}
                     >
                         <Text style={styles.payTitle}>Открой для себя полный{'\n'}доступ!</Text>
                     </LinearGradient>

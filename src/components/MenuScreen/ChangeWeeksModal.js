@@ -6,6 +6,7 @@ import network from '../../../Utilites/Network'
 import { observer } from 'mobx-react-lite'
 import Modal from 'react-native-modal'
 import Config from '../../constants/Config'
+import { getBottomSpace } from 'react-native-iphone-x-helper'
 // import { TouchableHighlight } from 'react-native-gesture-handler'
 
 
@@ -51,16 +52,16 @@ const styles = StyleSheet.create({
         fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
         alignSelf:'center',
         lineHeight:19,
-        marginBottom:common.getLengthByIPhone7(22),
+        marginBottom:21,
         color:Colors.textColor,
         fontWeight:'bold'
     },
     mainBlock:{
         backgroundColor:'#FFF',
-        paddingBottom:common.getLengthByIPhone7(64),
-        paddingTop:common.getLengthByIPhone7(22),
-        borderTopStartRadius:common.getLengthByIPhone7(24),
-        borderTopEndRadius:common.getLengthByIPhone7(24),
+        paddingBottom:49 + getBottomSpace(),
+        paddingTop:22,
+        borderTopStartRadius:24,
+        borderTopEndRadius:24,
     },
     item:{
         flexDirection:'row',
@@ -76,18 +77,4 @@ const styles = StyleSheet.create({
         color:Colors.textColor,
         fontWeight:'500'
     },
-    btn:{
-        height:47,width:Dimensions.get('window').width - 20,
-        borderRadius:10,
-        marginTop:common.getLengthByIPhone7(39),
-        justifyContent:'center',alignItems:'center',
-        alignSelf:'center',backgroundColor:Colors.yellow
-    },
-    btnText:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
-        alignSelf:'center',
-        lineHeight:19,
-        color:Colors.textColor,
-        fontWeight:'500'
-    }
 })

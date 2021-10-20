@@ -30,8 +30,8 @@ const QuizItem = ({title='',icons=[],onPress=() => null,persons=false}) => {
             width: 0,
             height: 4,
         },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,marginBottom:16,
+        shadowOpacity: 0.06,
+        shadowRadius: 4,marginBottom:16,
     }} >
     <View style={styles.card} onLayout={e => console.warn(e.nativeEvent.layout.height)}>
         <TouchableHighlight style={styles.container} underlayColor={Colors.underLayYellow} onPress={() => onPress()}>

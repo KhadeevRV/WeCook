@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { StyleSheet, Text, View,SafeAreaView, ImageBackground, Dimensions, Image, Platform,TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View,SafeAreaView, ImageBackground, Dimensions, Image, Platform,TouchableOpacity, StatusBar } from 'react-native'
 import { FlatList, ScrollView } from 'react-native-gesture-handler'
 import common from '../../../Utilites/Common'
 import { getStatusBarHeight, getBottomSpace } from 'react-native-iphone-x-helper'
@@ -16,10 +16,15 @@ const RecipeOfTheDay = ({recept,onPress,blur=false,onSwipeUp= () => null}) => {
         velocityThreshold: 0.3,
         directionalOffsetThreshold: 80
     };
+
+    const navbarHeight = Dimensions.get('screen').height - screenHeight - StatusBar.currentHeight;
+
     return (
         <GestureRecognizer config={config} onSwipeUp={() => onSwipeUp()}>
         <TouchableOpacity onPress={() => onPress()} activeOpacity={1}>
-        <FastImage style={{width:'100%',height:screenHeight,paddingBottom:common.getLengthByIPhone7(28) + getBottomSpace(),justifyContent:'flex-end'}} 
+        <FastImage style={{width:'100%',height:screenHeight,
+            paddingBottom:common.getLengthByIPhone7(33) + Platform.select({ios:getBottomSpace(),android:navbarHeight}),
+            justifyContent:'flex-end'}} 
             source={{uri:recept?.images?.big_webp,}} key={recept?.images?.big_webp}
         >
             {blur ? 

@@ -19,19 +19,21 @@ export const EarlyItem = observer(({dish,onPress}) => {
                 width: 0,
                 height: 4,
             },
-            shadowOpacity: 0.08,
-            shadowRadius: 20,
+            shadowOpacity: 0.06,
+            shadowRadius: 4,
         }}>
         <TouchableOpacity activeOpacity={1} onPress={() => onPress()} style={styles.cardView}>
             <View style={{flexDirection:'row',alignItems:'center'}}>
-                <FastImage style={{width:common.getLengthByIPhone7(80),height:common.getLengthByIPhone7(48),marginRight:common.getLengthByIPhone7(16),borderRadius:10}} 
-                    source={{uri:dish?.images?.middle_webp}} borderRadius={16} />
+                <FastImage 
+                    style={{width:common.getLengthByIPhone7(80),
+                    height:common.getLengthByIPhone7(48),marginRight:common.getLengthByIPhone7(16),borderRadius:10}} 
+                    source={{uri:dish?.images?.middle_webp}} borderRadius={10} />
                 <View>
                     <Text style={styles.itemTitle} numberOfLines={1}>{dish?.name}</Text>
                     <Text style={styles.itemSubtitle} numberOfLines={1}>{dish?.persons} {common.declOfNum(dish?.persons,['персона','персоны','персон'])}</Text>
                 </View>                
             </View>
-            <Image style={{width:8,height:13,transform:[{rotate:'180deg'}]}} source={require('../../../assets/icons/goBack.png')} />
+            <Image source={require('../../../assets/icons/goDown.png')} style={{width:13,height:8,transform:[{rotate:'-90deg'}]}} />
         </TouchableOpacity>
         </View>
     )
@@ -63,7 +65,7 @@ itemTitle:{
     fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
     lineHeight:19,
     maxWidth:common.getLengthByIPhone7(184),
-    color:Colors.textColor,
+    color:Colors.textColor,marginBottom:3,
     fontWeight:'500'
 },
 itemSubtitle:{

@@ -39,7 +39,9 @@ const LoginScreen = observer(({navigation,route}) => {
         }
     }
 
-    const {from,closeDisable,exit} = route?.params
+    const exit = route?.params?.exit
+    const closeDisable = route?.params?.closeDisable
+    const from = route?.params?.from
 
     useEffect(() => {
         if(!!closeDisable){

@@ -18,7 +18,8 @@ const PayWallScreen = observer(({navigation,route}) => {
     const [currentPlan, setCurrentPlan] = useState(0)
     const [loading, setLoading] = useState(false)
     const fromOnboarding = route?.params?.fromOnboarding
-    const {data} = route?.params
+    const data = route.params?.data
+    
     const screen = data ?? network.onboarding['PayWallScreen']
 
     const plansView = []
@@ -64,7 +65,7 @@ const PayWallScreen = observer(({navigation,route}) => {
                         network.user?.phone ? navigation.navigate(screen?.next_board) : navigation.navigate('LoginScreen',{closeDisable:true,from:screen?.next_board})
                     }
                     setTimeout(() => {
-                        Alert.alert(Config.appName,'Подписка куплена. Пздравляем!')
+                        Alert.alert(Config.appName,'Подписка куплена. Поздравляем!')
                     }, 1500);
                 } catch (error) {
                     console.warn(error)

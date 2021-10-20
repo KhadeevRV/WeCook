@@ -33,7 +33,7 @@ const ListItem = observer(({recept,onPress,eyeHandler}) => {
                 top: 0,left: 0,bottom: 0,right: 0,
                 borderRadius:17
                 }}
-                blurType="light"
+                blurType="xlight"
                 blurAmount={24}
                 blurRadius={24}
                 reducedTransparencyFallbackColor={'#FFF'}
@@ -70,16 +70,21 @@ const ListItem = observer(({recept,onPress,eyeHandler}) => {
                 height: 4,
             },
             shadowOpacity: 0.06,
-            shadowRadius: 14,
+            shadowRadius: 4,
             elevation:10
         }}>
         <TouchableOpacity onPress={() => onPress()} activeOpacity={1}
         style={{...styles.card}}>
                 {eyeBtn}
+            {openedEye ? null : 
+            <View style={{height:'100%',width:'100%',position:'absolute',borderRadius:16,opacity:0.4,
+                zIndex:100,backgroundColor:'#FFF'}} />
+            }
             <View>
+                
                 <LinearGradient colors={['rgba(0, 0, 0, 0)', `rgba(0, 0, 0,.4)`]} 
                     style={styles.linearView}>
-                        <View style={{flexDirection:'row',alignItems:'center'}}>
+                        <View style={{flexDirection:'row',alignItems:'center',top:2}}>
                             <View style={{flexDirection:'row',alignItems:'center',marginRight:4}}>{personsIcons}</View>
                             <Text style={styles.personsText}>{recept.persons} {common.declOfNum(recept.persons, ['персона', 'персоны', 'персон'])}</Text>
                         </View>
@@ -99,7 +104,8 @@ export default ListItem
 
 const styles = StyleSheet.create({
     card:{
-        width:168, elevation:10,
+        width:(common.getLengthByIPhone7() - 39)/2, 
+        elevation:10,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
@@ -108,10 +114,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.04,
         shadowRadius: 8,
         backgroundColor:'#FFF',
-        marginRight:7,borderRadius:16
+        marginRight:7,
+        borderRadius:16
     },
     title:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:12,
         lineHeight:14,paddingHorizontal:16,fontWeight:'500',
         color:Colors.textColor
     },
@@ -126,7 +133,7 @@ const styles = StyleSheet.create({
         paddingTop:14,paddingBottom:11,paddingLeft:12,
     },
     personsText:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:12,
         lineHeight:14,fontWeight:'500',
         color:'#FFF'
     }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import {Image,View,Text, AsyncStorage, Platform, Dimensions} from 'react-native'
 import { createStackNavigator, TransitionSpecs, TransitionPresets } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
@@ -136,14 +136,29 @@ const AppStack = observer(() => {
 
 
 export const createRootNavigator = () => {
-
-    const AllScreens = () => { 
-        return (
-        <NavigationContainer>
-            <AppStack />
-        </NavigationContainer>
-        )
-    }
-
+  
+  const AllScreens = () => { 
+    const navigationRef = useRef()
+    const routeNameRef = useRef()
+      return (
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={() =>
+          (routeNameRef.current = navigationRef.current.getCurrentRoute().name)
+        }
+        onStateChange={async () => {
+          const previousRouteName = routeNameRef.current;
+          const currentRouteName = navigationRef.current.getCurrentRoute().name;
+          if (previousRouteName !== currentRouteName) {
+            // await Analytics.setCurrentScreen(currentRouteName);
+            console.warn(currentRouteName)
+          }
+          routeNameRef.current = currentRouteName;
+        }}
+      >
+          <AppStack />
+      </NavigationContainer>
+      )
+  }
     return AllScreens; 
 };

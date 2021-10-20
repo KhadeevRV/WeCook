@@ -48,7 +48,7 @@ const SettingsScreen = observer(({navigation}) => {
             >
                 <View style={styles.container}>
                     <Text style={styles.title}>Уведомления</Text>
-                    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingVertical:11}}>
+                    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingVertical:13}}>
                         <Text style={styles.subtitle}>Отправлять push-уведомления</Text>
                         <Switch
                             value={isEnabled}
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     title:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:18,
         lineHeight:21,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        color:Colors.textColor,marginTop:41,marginBottom:10
+        color:Colors.textColor,marginTop:25,marginBottom:10
     },
     subtitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,

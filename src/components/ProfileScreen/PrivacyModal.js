@@ -21,7 +21,7 @@ export const PrivacyModal = observer(({modal, closeModal}) => {
         swipeDirection={['down']}
         onSwipeComplete={() => closeModal()} propagateSwipe={true}
         backdropOpacity={0.4}
-        style={{margin: 0,justifyContent: 'flex-end',marginTop:18 + getStatusBarHeight()}}
+        style={{margin: 0,justifyContent: 'flex-end',marginTop:getStatusBarHeight()}}
         >   
             <TouchableOpacity style={styles.btnView} activeOpacity={1}
                     onPress={() => closeModal()}>
@@ -58,8 +58,9 @@ export const PrivacyModal = observer(({modal, closeModal}) => {
 
 const styles = StyleSheet.create({
     title:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
-        lineHeight:19,
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:22,
+        fontWeight:Platform.select({ ios: '800', android: 'bold' }),
+        lineHeight:26,
         marginBottom:10,
         color:Colors.textColor,
         fontWeight:'bold'
@@ -71,7 +72,8 @@ const styles = StyleSheet.create({
         borderTopEndRadius:common.getLengthByIPhone7(24),
     },
     commonText:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:14,
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Medium',fontSize:14,
+        fontWeight:'500',
         lineHeight:17,
         color:Colors.textColor,
     },

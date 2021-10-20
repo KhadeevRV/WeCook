@@ -3,10 +3,12 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 
 platform :ios, '10.0'
 
+
 target 'WeCook' do
     permissions_path = '../node_modules/react-native-permissions/ios'
 
     pod 'Permission-AppTrackingTransparency', :path => "#{permissions_path}/AppTrackingTransparency"
+    
   config = use_native_modules!
 
   use_react_native!(
@@ -16,6 +18,8 @@ target 'WeCook' do
   )
 
   pod 'RNFastImage', :path => '../node_modules/react-native-fast-image'
+
+  pod 'RNIap', :path => '../node_modules/react-native-iap'
 
   target 'WeCookTests' do
     inherit! :complete
@@ -28,7 +32,13 @@ target 'WeCook' do
   # you should disable the next line.
 #  use_flipper!()
 
-  post_install do |installer|
-    react_native_post_install(installer)
+post_install do |installer|
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
   end
+end
+end
+
+target 'OneSignalNotificationServiceExtension' do
+  pod 'OneSignal', '>= 3.0', '< 4.0'
 end

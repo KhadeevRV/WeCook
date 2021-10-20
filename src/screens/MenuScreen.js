@@ -15,6 +15,7 @@ import { ChangeWeeksModal } from '../components/MenuScreen/ChangeWeeksModal'
 import { StoriesModal } from '../components/MenuScreen/StoriesModal'
 import Spinner from 'react-native-loading-spinner-overlay'
 import FastImage from 'react-native-fast-image'
+import BottomListBtn from '../components/BottomListBtn'
 // import Animated from 'react-native-reanimated'
 // import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -72,7 +73,7 @@ const MenuScreen = observer(({navigation}) => {
             <View style={{alignItems:'center'}}>
                 <TouchableOpacity activeOpacity={1} onPress={() => setWeeksModal(true)} style={{flexDirection:'row',alignItems:'center'}}>
                     <Text style={styles.headerTitle}>{currentWeek} неделя</Text>
-                    <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,marginLeft:6}} />
+                    <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,marginLeft:6,bottom:4}} />
                 </TouchableOpacity>
                 <Text style={styles.headerSubitle}>{network.user?.persons} персоны</Text>
             </View>
@@ -138,7 +139,10 @@ const MenuScreen = observer(({navigation}) => {
     }
 
     //! Меню на неделю
-
+    const dayRecipeScreens = []
+    for (let i = 0; i < network.dayDishes.length; i++) {
+        dayRecipeScreens.push(i * (common.getLengthByIPhone7(304) + 7))
+    }
     // Проходим по массиву секции
     for (let i = 0; i < network.sectionNames.length; i++) {
         screens.push(i * common.getLengthByIPhone7())
@@ -154,7 +158,9 @@ const MenuScreen = observer(({navigation}) => {
                     const ind = sectionNames.findIndex(item => item == network.sectionNames[i])
                     horScroll.current.scrollTo({x: ind * common.getLengthByIPhone7()})
                 }} >
-                    <Text style={styles.addsTitle}>{network.sectionNames[i]}</Text>
+                    <Text style={[styles.addsTitle]}>
+                        {network.sectionNames[i]}
+                    </Text>
                 </TouchableOpacity>
                 </View>
             )
@@ -169,7 +175,9 @@ const MenuScreen = observer(({navigation}) => {
                     const ind = sectionNames.findIndex(item => item == network.sectionNames[i])
                     horScroll.current.scrollTo({x: ind * common.getLengthByIPhone7()})
                 }} >
-                    <Text style={styles.addsTitle}>{network.sectionNames[i]}</Text>
+                    <Text style={[styles.addsTitle]}>
+                        {network.sectionNames[i]}
+                    </Text>
                 </TouchableOpacity>
                 </View>
             )
@@ -267,9 +275,9 @@ const MenuScreen = observer(({navigation}) => {
                     screenWidth*0,screenWidth*1,screenWidth*2
                 ],
                 outputRange:[
-                    newObj[sectionNames[0]]?.x + newObj[sectionNames[0]]?.width/2,
-                    newObj[sectionNames[1]]?.x + newObj[sectionNames[1]]?.width/2,
-                    newObj[sectionNames[2]]?.x + newObj[sectionNames[2]]?.width/2
+                    newObj[sectionNames[0]]?.x,
+                    newObj[sectionNames[1]]?.x,
+                    newObj[sectionNames[2]]?.x
                 ],
                 extrapolate:'extend',
             }))
@@ -305,12 +313,15 @@ const MenuScreen = observer(({navigation}) => {
           <TouchableOpacity
             onPress={() => openStory(i)} key={network.stories[i].id}
           >
-          <FastImage source={{uri: network.stories[i].image}} style={{width:108,height:108,
-             backgroundColor:'#FFF',marginRight:9,justifyContent:'flex-end',paddingHorizontal:6,paddingBottom:9}} borderRadius={16}>
+          <FastImage source={{uri: network.stories[i].image}} style={{
+              width:common.getLengthByIPhone7(108),
+              height:common.getLengthByIPhone7(108),
+             backgroundColor:'#FFF',marginRight:9,justifyContent:'flex-end',borderRadius:16,
+             paddingHorizontal:6,paddingBottom:9}} borderRadius={16}>
                {network.stories[i].viewed ? null :
                <View style={{width:14,height:14,backgroundColor:'#FFF',borderRadius:7,position:'absolute',right:0,top:0,
                     justifyContent:'center',alignItems:'center'}}>
-                   <View style={{width:8,height:8,borderRadius:4,backgroundColor:'#FFF500'}} />
+                   <View style={{width:8,height:8,borderRadius:4,backgroundColor:Colors.yellow}} />
                 </View> 
                }
           </FastImage>
@@ -341,7 +352,7 @@ const MenuScreen = observer(({navigation}) => {
             {header}
             <ScrollView
                 showsVerticalScrollIndicator={false} style={{flex:1}}
-                contentContainerStyle={{paddingBottom:120}} stickyHeaderIndices={[6]}
+                contentContainerStyle={{paddingBottom:30}} stickyHeaderIndices={[6]}
                 ref={mainScroll}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingLeft:16,
                     marginTop:16,paddingRight:7}}>
@@ -350,7 +361,7 @@ const MenuScreen = observer(({navigation}) => {
                 <TouchableOpacity style={{marginTop:20}} activeOpacity={1} 
                     onPress={() => bannerHandler(network.banner1)}>
                 <ImageBackground 
-                    style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,borderRadius:16,minHeight:80}} 
+                    style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,borderRadius:16,minHeight:80,paddingTop:22}} 
                     borderRadius={16}
                     source={{uri:network.banner1?.image_btn?.big_webp}}
                 >
@@ -361,7 +372,7 @@ const MenuScreen = observer(({navigation}) => {
                     <Text style={styles.subtitle}>Рецепты дня</Text>
                     <TouchableOpacity style={{paddingHorizontal:16,height:26,justifyContent:'center'}}
                         onPress={() => navigation.navigate('SecondReceptDayScreen')}>
-                        <Image source={require('../../assets/icons/goBack.png')} style={{width:8,height:13,transform:[{rotate:'180deg'}]}} />
+                        <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,transform:[{rotate:'-90deg'}]}} />
                     </TouchableOpacity>
                 </View>
                 <FlatList 
@@ -370,23 +381,32 @@ const MenuScreen = observer(({navigation}) => {
                     data={network.dayDishes}
                     extraData={network.dayDishes}
                     keyExtractor={(item, index) => index} 
+                    scrollEventThrottle={16}
+                    pagingEnabled={true}
+                    decelerationRate={Platform.select({ ios: 'fast', android: 0.8})}
+                    snapToInterval={common.getLengthByIPhone7(0)-common.getLengthByIPhone7(32)}
+                    disableIntervalMomentum={true}
+                    snapToAlignment={"center"}
+                    snapToOffsets={dayRecipeScreens}
                     renderItem={({item,index}) => <DayRecipeCard recept={item} onPress={() => openRec(item)} 
                         listHandler={(isInList,recept) => listHandler(isInList,recept)} key={item.id}/> }
                 />
+                {Object.keys(network.banner2).length ? 
                 <TouchableOpacity activeOpacity={1} onPress={() => bannerHandler(network.banner2)}>
                 <ImageBackground 
                         source={{uri:network.banner2?.image_btn?.big_webp}}
-                        style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,minHeight:80}}
+                        style={{paddingHorizontal:16,marginHorizontal:16,paddingVertical:19,minHeight:80,paddingTop:22}}
                         borderRadius={16}
                 >
                     <Text style={styles.addsTitle}>{network.banner2?.title_on_btn}</Text>
                 </ImageBackground>
-                </TouchableOpacity>
-                <View style={{marginTop:38,flexDirection:'row',alignItems:'center',paddingLeft:16,marginBottom:10}}>
+                </TouchableOpacity> : null}
+                <View style={{marginTop:38,flexDirection:'row',alignItems:'center',paddingLeft:16,marginBottom:8}}>
                     <Text style={styles.subtitle}>Меню на неделю</Text>
-                    <TouchableOpacity style={{paddingHorizontal:16,height:26,justifyContent:'center'}} activeOpacity={1}
+                    <TouchableOpacity style={{paddingHorizontal:16,height:26,justifyContent:'center'}} 
+                        activeOpacity={1}
                         onPress={() => setFilterModal(true)}>
-                        <Image source={require('../../assets/icons/filter.png')} style={{width:20,height:19}} />
+                        <Image source={require('../../assets/icons/filter.png')} style={{width:20,height:19,top:1}} />
                     </TouchableOpacity>
                 </View>
                 <View style={{marginBottom:20}} onLayout={(e) => setTabsY(e.nativeEvent.layout.y)}>
@@ -394,20 +414,27 @@ const MenuScreen = observer(({navigation}) => {
                     {sections}
                 </View>
                 <View>
-                <Animated.View style={{width:1, height:4,backgroundColor:Colors.yellow,position:'absolute',bottom:0,
-                                    transform:[{translateX},{scaleX}]}}/>
+                <Animated.View style={{
+                    width:scaleX, height:4,
+                    backgroundColor:Colors.yellow,
+                    position:'absolute',bottom:0,
+                    // borderRadius:20,
+                    borderTopRightRadius:2,
+                    borderTopLeftRadius:2,
+                    transform:[{translateX}]}}
+                />
                 </View>
                 </View>
                 <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} ref={horScroll}
                     bounces={false}
                     scrollEventThrottle={16}
                     pagingEnabled={true}
-                    stickyHeaderIndices={[1]}
                     decelerationRate={Platform.select({ ios: 'fast', android: 0.8})}
                     snapToInterval={common.getLengthByIPhone7(0)-common.getLengthByIPhone7(32)}
                     disableIntervalMomentum={true}
                     snapToAlignment={"center"}
-                    // style={{flex:1}}
+                    // style={{flex:1,}}
+                    contentContainerStyle={{flexGrow:1}}
                     snapToOffsets={screens}
                     onScroll={Animated.event(
                         [{nativeEvent: {contentOffset: {x: scrollX}}}],
@@ -418,31 +445,14 @@ const MenuScreen = observer(({navigation}) => {
                             //         setPage(newPage)
                             //     }, 100);
                             // }
-                        },useNativeDriver:true},
+                        },useNativeDriver:false},
                     )}
                 >
                     {menuBody}
                 </Animated.ScrollView>
             </ScrollView>
             {network.listDishes.length ? 
-            <View style={{padding:8,backgroundColor:"#FFF",paddingBottom:getBottomSpace() + 8}}>
-                <TouchableHighlight onPress={() => navigation.navigate('ListScreen')}
-                    style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16}} 
-                    underlayColor={Colors.underLayYellow}>
-                    <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
-                        <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
-                    </View>
-                    <Text style={styles.addsTitle}>Рецепт в списке</Text>
-                    </View>
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                        <Image source={require('../../assets/icons/listMenu.png')} style={{width:23,height:21,marginRight:5}} />
-                        <Text style={styles.timeText}>от 2 ч.</Text>
-                    </View>
-                    </View>
-                </TouchableHighlight>
-            </View> : null}
+            <BottomListBtn navigation={navigation} /> : null}
             <FilterModal modal={filterModal} closeModal={() => setFilterModal(false)} allFilters={filterNames} currentFilters={currentFilters}
                 applyFilters={(filtersArr) => {
                     filterHandler(filtersArr,currentWeek)
@@ -472,13 +482,15 @@ export default MenuScreen
 const styles = StyleSheet.create({
     header:{
         height:44,
-        alignItems:'center',flexDirection:'row',justifyContent:'space-between',
+        alignItems:'center',
+        flexDirection:'row',justifyContent:'space-between',
         backgroundColor:'#FFF',
     },
     headerTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,
         lineHeight:19,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        color:Colors.textColor
+        color:Colors.textColor,
+        bottom:4,
     },
     headerSubitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
@@ -487,7 +499,6 @@ const styles = StyleSheet.create({
     },
     addsTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
-        fontWeight:'500',
         lineHeight:19,
         color:Colors.textColor
     },

@@ -1,5 +1,5 @@
 import React,{useState,useRef,useEffect} from 'react'
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal,ScrollView, ImageBackground,Animated, Dimensions, Share, Platform,FlatList, Alert,SafeAreaView} from 'react-native'
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal,ScrollView, ImageBackground,Animated, Dimensions, Share, Platform,FlatList, Alert,SafeAreaView, StatusBar} from 'react-native'
 import Colors from '../../constants/Colors'
 import common from '../../../Utilites/Common'
 import network, { addToMenu, replaceMenu, iSeeYourDaddy } from '../../../Utilites/Network'
@@ -12,6 +12,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import Config from '../../constants/Config'
 import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 import FastImage from 'react-native-fast-image'
+import { runInAction } from 'mobx'
 
 function useInterval(callback, delay) {
     const savedCallback = useRef();
@@ -41,15 +42,16 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
     const [currentStory, setCurrentStory] = useState(0)
     const [videoLoad, setVideoLoad] = useState(stories[currentStory].video ? false : true)
 
-    const delay = Platform.OS == 'ios' ? 100 : 100
+    const delay = Platform.OS == 'ios' ? 100 : 200
 
     useEffect(() => {
         // stories.length == currentStory - 1
         if(network.stories[blockNumber].stories.length == (currentStory + 1)){
-            network.stories[blockNumber].viewed = true
+            network.stories[blockNumber]?.viewed  ? null : iSeeYourDaddy(network.stories[blockNumber].id)
+            runInAction(() => network.stories[blockNumber].viewed = true)
         }
         setFullText(false)
-        network.fullStoryText = false
+        runInAction(() => network.fullStoryText = false)
     }, [currentBlock,currentStory])
 
     useInterval(() => {
@@ -90,15 +92,15 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
     for (let i = 0; i < stories.length; i++) {
         const width = animation.current.interpolate({
             inputRange: [100 * i, 100 * (i + 1)],
-            outputRange: [0, ((Dimensions.get('window').width - 20)/ stories.length) - 3],
+            outputRange: [0, ((Dimensions.get('window').width - 20)/ stories.length) - 7],
             extrapolate: "clamp"
         })
         if(i + 1 == stories.length){
-            progressBar.push(<Animated.View style={{height:2,backgroundColor:'#FFF',borderRadius:4,width:width}}/>)
-            inActiveView.push(<View style={{width:((Dimensions.get('window').width - 20)/ stories.length) - 3,height:2,backgroundColor:'#FFF',borderRadius:4,opacity:0.5}}/>)
+            progressBar.push(<Animated.View style={{height:4,backgroundColor:'#FFF',borderRadius:4,width:width}}/>)
+            inActiveView.push(<View style={{width:((Dimensions.get('window').width - 20)/ stories.length) - 8,height:4,backgroundColor:'#FFF',borderRadius:4,opacity:0.5}}/>)
         } else {
-        progressBar.push(<Animated.View style={{height:2,backgroundColor:'#FFF',borderRadius:4,width:width,marginRight:3}}/>)
-        inActiveView.push(<View style={{width:((Dimensions.get('window').width - 20)/ stories.length) - 3,marginRight:3,height:2,backgroundColor:'#FFF',borderRadius:4,opacity:0.5}}/>)
+        progressBar.push(<Animated.View style={{height:4,backgroundColor:'#FFF',borderRadius:4,width:width,marginRight:8}}/>)
+        inActiveView.push(<View style={{width:((Dimensions.get('window').width - 20)/ stories.length) - 8,marginRight:8,height:4,backgroundColor:'#FFF',borderRadius:4,opacity:0.5}}/>)
         }
     }
 
@@ -137,6 +139,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
     //     //     setStop(false)
     //     // }, 300); 
     // }, [currentStory])
+    
   return (
     <> 
         {stories[currentStory].video ? 
@@ -174,8 +177,8 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                 paused={stop} 
                 />
             </View>
-            <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]}>
-                <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? 20 : 0}} />
+            {/* <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]}> */}
+                <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight  : 0}} />
                 <View style={{height:120}}>
                     <View style={{flexDirection:'row',paddingHorizontal:10,position:'absolute',width:'100%',zIndex:10,marginTop:4}}>
                         {progressBar}
@@ -193,7 +196,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                         <View />
                     </View>
                 </View>
-            </LinearGradient>
+            {/* </LinearGradient> */}
             <View style={{flex:1,position:'absolute',zIndex:100,marginTop:120,height:'100%',width:'100%',flexDirection:'row',justifyContent:'space-between'}}>
                 <TouchableOpacity style={{opacity:0,height:'100%',width:'30%',}} 
                 activeOpacity={1} 
@@ -246,10 +249,10 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
             onLoad={() => {
                 setVideoLoad(true)
             }}>
-            {fullText ? <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? 20 : 0}} />  :
+            {fullText ? <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight  : 0}} />  :
             <View>
-            <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]} style={{paddingTop:Platform.OS == 'android' ? 0 : getStatusBarHeight()}}>
-            <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? 20 : 0}} /> 
+            {/* <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]} style={{paddingTop:Platform.OS == 'android' ? 0 : getStatusBarHeight()}}> */}
+            <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight : 0}} /> 
                 <View style={{height:120}}>
                     <View style={{flexDirection:'row',paddingLeft:11,paddingRight:10,position:'absolute',width:'100%',zIndex:10,marginTop:4}}>
                         {progressBar}
@@ -267,7 +270,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                         <View/> 
                     </View>
                 </View>
-            </LinearGradient>
+            {/* </LinearGradient> */}
             </View>}
             {stories[currentStory].text && stories[currentStory].text.length ? null :
             <ScrollView onMomentumScrollBegin={(e) => {

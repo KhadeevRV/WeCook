@@ -20,7 +20,7 @@ import FastImage from 'react-native-fast-image'
 import KeepAwake from 'react-native-keep-awake';
 import network from '../../Utilites/Network'
 import { runInAction } from 'mobx'
-
+import { AppEventsLogger } from "react-native-fbsdk-next";
 
 const Step = ({step,count}) => {
     const subtitleView = []
@@ -35,7 +35,7 @@ const Step = ({step,count}) => {
         </Text>)
     }
     return(
-    <View >
+    <View>
         {step?.images?.big_webp ? 
         <>
         {Platform.OS == 'ios' ? 
@@ -47,8 +47,8 @@ const Step = ({step,count}) => {
         />}
         </> : null}
         <View style={{padding:16,backgroundColor:'#F5F5F5',borderRadius:16,
-            top:step?.images?.big_webp ? -32 : 0,
-            marginTop:step?.images?.big_webp ? 0 : 20
+            top:step?.images?.big_webp ? -33 : 0,
+            marginTop:step?.images?.big_webp ? 0 : 48
         }}>
             <View style={{width:30,height:30,backgroundColor:'#EEEEEE',position:'absolute',borderRadius:15,zIndex:100,left:common.getLengthByIPhone7(0)/2 - 30,
                 alignItems:'center',justifyContent:'center',top:-15}}>
@@ -112,10 +112,11 @@ function useInterval(callback, delay) {
 const ReceptScreen = observer(({navigation,route}) => {
 
     const currentRec = route.params.rec
+    const fromHistory = route.params?.fromHistory
     const screenHeight = Dimensions.get('window').height
     const steps = []
     const ingredients = []
-    const [persons, setPersons] = useState(currentRec.persons ?? network.user?.persons)
+    const [persons, setPersons] = useState(currentRec?.persons ?? network.user?.persons)
     const notif = useRef(null)
     const isInList = network.listDishes.length ? !!network.listDishes.filter((item) => item.id == currentRec.id).length : false
     const isInFavor = network.favorDishes.length ? !!network.favorDishes.filter((item) => item.id == currentRec.id).length : false
@@ -136,6 +137,7 @@ const ReceptScreen = observer(({navigation,route}) => {
     }
 
     const onShare = async () => {
+        AppEventsLogger.logPurchase(15, "USD", { param: "value" });
         const result = await Share.open({
           message:`Посмотри, какой удачный рецепт я нашла в приложении Foodplan${'\n'}${currentRec.share_link}`
         },{
@@ -146,7 +148,10 @@ const ReceptScreen = observer(({navigation,route}) => {
 
     const changeRecPersons = (newPersons) => {
         setPersons(newPersons)
-        setTime(new Date())
+        if(!fromHistory || network.listDishes.find(dish => dish.id == currentRec.id)){
+            console.warn('object')
+            setTime(new Date())
+        }
     }
 
     const delay = 500
@@ -170,7 +175,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                 }}
                 borderTopLeftRadius={24} borderTopRightRadius={24}>
                     <LinearGradient colors={['rgba(0, 0, 0, 0)', `rgba(0, 0, 0, .3)`]} >
-                    <View style={{paddingTop:common.getLengthByIPhone7(101),paddingBottom:15,paddingHorizontal:16}}>
+                    <View style={{paddingTop:common.getLengthByIPhone7(101),paddingBottom:10,paddingHorizontal:16}}>
                         <View style={{flexDirection:'row',alignItems:'center'}}>
                             <Image style={{width:18,height:18,marginRight:6}} source={require('../../assets/icons/star.png')}/>
                             <Text style={{...styles.imageSubtitle,marginRight:16}}>{currentRec?.eating}</Text>
@@ -217,7 +222,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                 });
             }}>
             </TouchableOpacity> */}
-            <View style={{paddingHorizontal:16,backgroundColor:'#FFF',paddingTop:27}}>
+            <View style={{paddingHorizontal:16,backgroundColor:'#FFF',paddingTop:28.5}}>
                 <Text style={styles.title}>{currentRec?.name}</Text>
                 <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-around',marginBottom:common.getLengthByIPhone7(28)}}>
                     <TouchableOpacity style={{flexDirection:'row',alignItems:'center'}} activeOpacity={1}
@@ -231,7 +236,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                         <Text style={styles.subText}>Поделиться</Text>
                     </TouchableOpacity>
                 </View>
-                <View style={{backgroundColor:'#F5F5F5',borderRadius:16,flexDirection:'row',marginBottom:10,paddingVertical:10,
+                <View style={{backgroundColor:'#F5F5F5',borderRadius:16,flexDirection:'row',marginBottom:19,paddingTop:12,paddingBottom:13,
                     width:'100%',}}>
                     <View style={{alignItems:'center',width:(common.getLengthByIPhone7() - 32)/4,borderRightWidth:0.5,borderColor:'#EAEAEA'}}>
                         <Text style={styles.bjuTitle}>ККАЛ</Text>
@@ -257,7 +262,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                     <Image style={{width:11,height:11,marginRight:5}} source={require('../../assets/icons/info.png')} />
                     <Text style={styles.infoText}>Ценность на 100 г. </Text>
                 </View>
-                <Text style={{...styles.title,marginTop:common.getLengthByIPhone7(41),marginBottom:12}}>
+                <Text style={{...styles.subtitle,marginTop:35,marginBottom:17}}>
                     Количество персон
                 </Text>
                 <View style={{
@@ -267,7 +272,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                         height: 4,
                     },
                     shadowOpacity: 0.06,
-                    shadowRadius: 20,
+                    shadowRadius: 4,
                 }}>
                 <View style={styles.personsBar}>
                     <TouchableHighlight onPress={() => persons > 1 ? changeRecPersons(persons - 1) : null}
@@ -286,7 +291,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                     </TouchableHighlight>
                 </View>
                 </View>
-                <Text style={{...styles.title,marginTop:common.getLengthByIPhone7(41),marginBottom:4}}>
+                <Text style={{...styles.subtitle,marginTop:35,marginBottom:4}}>
                     Ингредиенты
                 </Text>
                 <View style={{backgroundColor:'#FFF',flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between'}}>
@@ -295,10 +300,13 @@ const ReceptScreen = observer(({navigation,route}) => {
 
                 {/* </ScrollView> */}
                 </View>
-                    <Text style={{...styles.title,marginTop:common.getLengthByIPhone7(41),marginBottom:12}}>
+                    <Text style={{...styles.subtitle,marginTop:35,marginBottom:12}}>
                         Этапы
                     </Text>
                     {steps}
+                    <Text style={{...styles.title,marginTop:49,alignSelf:'center'}}>
+                        Приятного аппетита
+                    </Text>
                 </View>
             </>
     ]
@@ -355,7 +363,7 @@ const ReceptScreen = observer(({navigation,route}) => {
         >
             {content}
         </ScrollView>
-        <TouchableHighlight style={{width:34,height:34,borderRadius:17,position:'absolute',
+        <TouchableHighlight style={{width:36,height:36,borderRadius:18,position:'absolute',
             top: 10,padding:11,right:10,zIndex:100,
             justifyContent:'center',alignItems:'center',backgroundColor:Platform.select({ ios: null, android: '#E5E5E5' }),
             overflow:'hidden',}} onPress={() => navigation.goBack()} underlayColor={null}>
@@ -367,7 +375,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                 top: 0,left: 0,bottom: 0,right: 0,
                 borderRadius:17
                 }}
-                blurType="light"
+                blurType="xlight"
                 blurAmount={24}
                 blurRadius={24}
                 reducedTransparencyFallbackColor={'#FFF'}
@@ -377,13 +385,13 @@ const ReceptScreen = observer(({navigation,route}) => {
         </TouchableHighlight>
         {isInList ? 
         <TouchableHighlight style={{width:56,height:56,borderRadius:28,position:'absolute',
-            bottom: getBottomSpace() +  34,right:10,zIndex:100,overflow:'hidden',
+            bottom: getBottomSpace() +  37,right:10,zIndex:100,overflow:'hidden',
             justifyContent:'center',alignItems:'center',
             backgroundColor:Colors.yellow}} onPress={() => network.deleteFromList(currentRec)} underlayColor={Colors.underLayYellow}>
             <Image source={require('../../assets/icons/complete.png')} style={{width:18,height:14}} />
         </TouchableHighlight> : 
         <TouchableHighlight style={{height:56,borderRadius:28,position:'absolute',paddingHorizontal:22,
-            bottom: getBottomSpace() +  34,right:10,zIndex:100,overflow:'hidden',
+            bottom: getBottomSpace() +  37,right:10,zIndex:100,overflow:'hidden',
             justifyContent:'center',alignItems:'center',
             backgroundColor:Colors.yellow}} onPress={() => network.addToList(currentRec)} underlayColor={Colors.underLayYellow}>
             <View style={{flexDirection:'row',alignItems:'center'}}>
@@ -407,7 +415,7 @@ const styles = StyleSheet.create({
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:22,
         lineHeight:26,
         fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        color:Colors.textColor,marginBottom:common.getLengthByIPhone7(35)
+        color:Colors.textColor,marginBottom:35
     },
     subtitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:18,
@@ -462,7 +470,7 @@ const styles = StyleSheet.create({
     },
     ingredientTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
-        lineHeight:14,
+        lineHeight:14,marginBottom:1,
         color:Colors.textColor,
         maxWidth:common.getLengthByIPhone7(80),textAlign:'center'
     },

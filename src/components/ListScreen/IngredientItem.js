@@ -183,7 +183,7 @@ export const IngredientItem = ({item,onPress = () => null,display='flex'}) => {
                     position:'absolute',
                     height:common.getLengthByIPhone7(50),
                     zIndex:0,
-                    backgroundColor:Colors.yellow
+                    backgroundColor:'#EEEEEE'
                 }}/>
                 <Image source={{uri:  item?.images?.small_webp}} style={{width:40,height:40,borderRadius:8, marginRight:12,
                     opacity: currentItem.is_buyed ? 0.5 : 1,zIndex:100,
@@ -191,13 +191,13 @@ export const IngredientItem = ({item,onPress = () => null,display='flex'}) => {
                 }} />
                 <View>
                     <Text ref={textRef} collapsable={false} allowFontScaling={false} 
-                        style={{...styles.text,opacity: currentItem.is_buyed ? 0.5 : 1}} numberOfLines={2}
+                        style={{...styles.text,opacity: currentItem.is_buyed ? 0.5 : 1}} numberOfLines={1}
                         onLayout={(e) => {
                             Platform.OS == 'android' ? setTextCoords(e.nativeEvent.layout.width) : null
                         }}>
                         {item?.name}
                     </Text>
-                    <View style={{flexDirection:'row'}}>
+                    <View style={{flexDirection:'row',top:1.5}}>
                         <Text allowFontScaling={false} style={{...styles.subText,opacity: currentItem.is_buyed ? 0.5 : 1}}>
                             {item?.count == 0 ? '' : item?.count + ' '}
                         </Text>
@@ -215,7 +215,7 @@ export const IngredientItem = ({item,onPress = () => null,display='flex'}) => {
                         height:'100%',
                         justifyContent:'center',
                         right:0,
-                        paddingHorizontal:common.getLengthByIPhone7(17),
+                        paddingHorizontal:16,
                         position:'absolute'}}
                 onPress={() => {
                     setAnimStart(true)                        
@@ -226,15 +226,22 @@ export const IngredientItem = ({item,onPress = () => null,display='flex'}) => {
                     }, Platform.select({ ios: 450, android: 300 }))
                 }}>
                     <View style={{
-                            width:24,height:24,
-                            borderRadius:12,
-                            borderWidth:currentItem.is_buyed ? 0 : 1,
-                            borderColor:'#B3B3B3',
+                            width:20,height:20,
+                            borderRadius:10,
+                            backgroundColor:animStart ? Colors.yellow : currentItem.is_buyed ? '#FFF' :'#EEEEEE',
+                            justifyContent:'center',alignItems:'center'
+                            // borderWidth:currentItem.is_buyed ? 0 : 1,
+                            // borderColor:'#B3B3B3',
                         }}>
-                        {currentItem.is_buyed ?
+                        {animStart ? 
+                        <Image style={{width:8,height:8}} 
+                            source={require('../../../assets/icons/closeModal.png')}
+                        /> : 
+                        currentItem.is_buyed ?
                         <Image style={{width:19,height:18}} 
                             source={require('../../../assets/icons/refresh.png')}
-                        /> : null}
+                        /> : null
+                        }
                     </View>
                 </TouchableOpacity>
             </View>
@@ -253,10 +260,10 @@ const styles = StyleSheet.create({
         color:Colors.textColor
     },
     text:{
-        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:15,
+        fontFamily:Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',fontSize:16,
         lineHeight:18,
         fontWeight:'500',
-        maxWidth:common.getLengthByIPhone7(224),
+        maxWidth:common.getLengthByIPhone7(250),
         color:Colors.textColor
     },
     subText:{

@@ -89,11 +89,14 @@ const ListScreen = observer(({navigation}) => {
 
     const clearList = () => {
         Alert.alert('Очистить список','Все рецепты будут удалены из списка, продолжить?',
-            [{text:'Да',onPress:() => {
+            [
+            {text:'Нет'},
+            {text:'Очистить',onPress:() => {
                 listClear()
+                navigation.goBack()
                 runInAction(() => network.listDishes = [])
             }},
-            {text:'Нет'}])
+            ])
     }
 
     const eyeHandler = (status,index) => {
@@ -186,15 +189,15 @@ const ListScreen = observer(({navigation}) => {
                 <Text style={styles.headerSubitle}>
                     {network.listDishes.length}
                     {' ' + common.declOfNum(network.listDishes.length,['рецепт','рецепта','рецептов'])}, {ingredientsCount}
-                    {' ' + common.declOfNum(ingredientsCount,['продукт','продукта','продуктов'])}.
+                    {' ' + common.declOfNum(ingredientsCount,['продукт','продукта','продуктов'])}
                 </Text>
             </View>
             <View style={{flexDirection:'row',alignItems:'center',position:'absolute',right:0}}>
-                <TouchableOpacity activeOpacity={1} style={{paddingHorizontal:14,paddingVertical:11}}
+                <TouchableOpacity activeOpacity={1} style={{paddingHorizontal:14,paddingVertical:9}}
                     onPress={() => clearList()}>
                     <Image source={require('../../assets/icons/trash.png')} style={{width:20,height:24}} />
                 </TouchableOpacity>
-                <TouchableOpacity activeOpacity={1} style={{paddingLeft:14,paddingVertical:11,paddingRight:16}} onPress={() => onShare()}>
+                <TouchableOpacity activeOpacity={1} style={{paddingLeft:14,paddingVertical:9,paddingRight:16}} onPress={() => onShare()}>
                     <Image source={require('../../assets/icons/share.png')} style={{width:18,height:22}} />
                 </TouchableOpacity>
             </View>
@@ -215,7 +218,7 @@ const ListScreen = observer(({navigation}) => {
                 ref={mainScroll}>
                 <FlatList
                     showsHorizontalScrollIndicator={false} horizontal
-                    contentContainerStyle={{padding:16,paddingBottom:24,paddingRight:6}}
+                    contentContainerStyle={{padding:16,paddingBottom:15,paddingRight:6}}
                     data={network.listDishes}
                     extraData={network.listDishes}
                     keyExtractor={(item, index) => item.id} 
@@ -223,23 +226,23 @@ const ListScreen = observer(({navigation}) => {
                 />
                 {body}
                 {buyedBody.length ? 
-                <View style={{marginTop:38}}>
+                <View style={{marginTop:40}}>
                     <View style={{paddingHorizontal:16,}}>
                         <Text style={styles.subtitle}>Купленные</Text>
-                        <Text style={{...styles.headerSubitle,color:Colors.grayColor,marginTop:6,marginBottom:16}}>
+                        <Text style={{...styles.headerSubitle,marginTop:16,marginBottom:16}}>
                             Данные продукты не попадут в корзину при заказе в online
                         </Text>
                     </View>
                     {buyedBody}
                 </View> : null}
             </ScrollView>
-            <View style={{padding:8,backgroundColor:'#FFF',paddingBottom:getBottomSpace() + 8}}>
+            {/* <View style={{padding:8,backgroundColor:'#FFF',paddingBottom:getBottomSpace() + 8}}>
                 <TouchableHighlight onPress={() => null}
                     style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16,alignItems:'center'}} 
                     underlayColor={Colors.underLayYellow}>
                         <Text style={styles.addsTitle}>Заказать в Сбер Маркет</Text>
                 </TouchableHighlight>
-            </View>
+            </View> */}
             <AboutIngrModal modal={ingrModal} closeModal={() => setIngrModal(false)} dishes={dishesArr} ingredient={currentIngr}
                 onPress={(dish) => {
                     setIngrModal(false)
@@ -262,7 +265,7 @@ const styles = StyleSheet.create({
     headerTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,
         lineHeight:19,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        color:Colors.textColor,marginBottom:2
+        color:Colors.textColor,marginBottom:5,top:2
     },
     headerSubitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,

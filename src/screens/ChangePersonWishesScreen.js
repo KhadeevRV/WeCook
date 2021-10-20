@@ -63,10 +63,11 @@ const ChangeWishesScreen = observer(({navigation,route}) => {
     for (let i = 0; i < network.sectionNames.length; i++) {
         wishesBody.push(
             <TouchableHighlight key={network.sectionNames[i]} underlayColor={'#EEEEEE'} onPress={() => updateHandler(network.sectionNames[i])}>
-                <View style={{flexDirection:'row',justifyContent:'space-between',padding:16}}>
+                <View style={{flexDirection:'row',justifyContent:'space-between',padding:16,paddingVertical:15}}
+                    onLayout={e => console.warn(e.nativeEvent.layout.height)}   >
                     <Text style={styles.title}>{network.sectionNames[i]}</Text>
                     {network.user?.preference == network.sectionNames[i] ? 
-                    <Image source={require('../../assets/icons/bigComplete.png')} style={{width:16,height:16}} /> : null}
+                    <Image source={require('../../assets/icons/bigComplete.png')} style={{width:14,height:14}} /> : null}
                 </View>
             </TouchableHighlight>
         )
@@ -76,10 +77,10 @@ const ChangeWishesScreen = observer(({navigation,route}) => {
     for (let i = 0; i < personItems.length; i++) {
         personsBody.push(
             <TouchableHighlight key={personItems[i].id} underlayColor={'#EEEEEE'} onPress={() => updateHandler(personItems[i].id)}>
-                <View style={{flexDirection:'row',justifyContent:'space-between',padding:16}}>
+                <View style={{flexDirection:'row',justifyContent:'space-between',padding:16,paddingVertical:15}}>
                     <Text style={styles.title}>{personItems[i].title}</Text>
                     {network.user?.persons == personItems[i].id ? 
-                    <Image source={require('../../assets/icons/bigComplete.png')} style={{width:16,height:16}} /> : null}
+                    <Image source={require('../../assets/icons/bigComplete.png')} style={{width:14,height:14}} /> : null}
                 </View>
             </TouchableHighlight>
         )
@@ -101,7 +102,7 @@ export default ChangeWishesScreen
 
 const styles = StyleSheet.create({
     title:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
         lineHeight:19,
         fontWeight:'500',
     },

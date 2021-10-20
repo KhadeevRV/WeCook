@@ -11,6 +11,7 @@ import LinearGradient from 'react-native-linear-gradient'
 import { getBottomSpace } from 'react-native-iphone-x-helper'
 import FavorItem from '../components/FavoriteScreen/FavorItem'
 import { FilterModal } from '../components/MenuScreen/FilterModal'
+import BottomListBtn from '../components/BottomListBtn'
 
 const FavoriteScreen = observer(({navigation}) => {
 
@@ -100,25 +101,7 @@ const FavoriteScreen = observer(({navigation}) => {
                 <Text style={styles.subtitle}>Каждый понравившийся рецепт, ты можешь добавить в этот список</Text>
             </View>
             }
-            {network.listDishes.length ? 
-            <View style={{padding:8,backgroundColor:"#FFF",paddingBottom:getBottomSpace() + 8}}>
-                <TouchableHighlight onPress={() => navigation.navigate('ListScreen')}
-                    style={{width:'100%',padding:16,backgroundColor:Colors.yellow,borderRadius:16}} 
-                    underlayColor={Colors.underLayYellow}>
-                    <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} >
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <View style={{padding:3,borderRadius:10,backgroundColor:Colors.textColor,marginRight:7,minWidth:20,alignItems:'center'}}>
-                        <Text style={{...styles.headerSubitle,fontWeight:'bold',color:'#FFF'}}>{network.listDishes.length}</Text>
-                    </View>
-                    <Text style={{...styles.headerSubitle,fontWeight:'500'}}>Рецепт в списке</Text>
-                    </View>
-                    <View style={{flexDirection:'row',alignItems:'center'}}>
-                        <Image source={require('../../assets/icons/listMenu.png')} style={{width:23,height:21,marginRight:5}} />
-                        <Text style={styles.timeText}>от 2 ч.</Text>
-                    </View>
-                    </View>
-                </TouchableHighlight>
-            </View> : null}
+            {network.listDishes.length ? <BottomListBtn navigation={navigation} /> : null}
             <FilterModal modal={filterModal} closeModal={() => setFilterModal(false)} allFilters={filterNames} currentFilters={currentFilters}
             applyFilters={(filtersArr) => {
                 filterHandler(filtersArr)

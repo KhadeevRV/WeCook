@@ -35,12 +35,15 @@ const ProfileScreen = observer(({navigation}) => {
 
     const header = [
         <View style={styles.header}>
-            <TouchableOpacity activeOpacity={1} style={{position:'absolute',left:0,paddingVertical:11,paddingHorizontal:16,zIndex:100}} 
+            <TouchableOpacity activeOpacity={1} style={{position:'absolute',left:0,paddingVertical:11,paddingHorizontal:16,zIndex:100,
+                bottom:3}} 
             onPress={() => navigation.goBack()}>
                 <Image source={require('../../assets/icons/goBack.png')} style={{width:11,height:18,tintColor:Colors.textColor}} />
             </TouchableOpacity>
             <View style={{alignItems:'center',alignSelf:'center'}}>
-                <Animated.Text style={{...styles.headerTitle,opacity:scrollY.interpolate({inputRange:[0,25],outputRange:[0,1],extrapolate:'extend'})}}>
+                <Animated.Text style={{...styles.headerTitle,
+                    opacity:scrollY.interpolate({inputRange:[0,29],outputRange:[0,1],extrapolate:'extend'})
+                }}>
                     {network?.user?.name ?? ''}
                 </Animated.Text>
             </View>
@@ -78,6 +81,8 @@ const ProfileScreen = observer(({navigation}) => {
         )
     }
 
+    console.warn(network.user)
+
     const footerArr = [
         {
             id:1,
@@ -102,7 +107,12 @@ const ProfileScreen = observer(({navigation}) => {
         {
             id:2,
             title:'Поделиться приложением',
-            onPress: () => console.warn('Поделиться приложением'),
+            onPress: () => {
+                Share.share({
+                    message:
+                      `Отличное приложение WeCook. Рекомендую!`,
+                  })
+            },
         },
         {
             id:3,
@@ -148,7 +158,9 @@ const ProfileScreen = observer(({navigation}) => {
                 )}
             >
                 <View style={styles.container}>
-                    <Animated.Text style={{...styles.title}}>
+                    <Animated.Text style={[styles.title,
+                        {color:network?.user?.name ? Colors.textColor : Colors.grayColor}
+                    ]}>
                         {network?.user?.name ?? 'Как тебя зовут?'}
                     </Animated.Text>
                     <Text style={styles.subtitle}>{network?.user?.phone ? '+' + network?.user?.phone : ''}</Text>
@@ -159,7 +171,7 @@ const ProfileScreen = observer(({navigation}) => {
                             start={{x:0,y:1}}
                             end={{x:1,y:1}}
                             locations={[0.4,0.88]}
-                            style={{paddingHorizontal:16,paddingVertical:19,borderRadius:16}}
+                            style={{paddingHorizontal:16,paddingVertical:21,borderRadius:16}}
                     >
                         <Text style={styles.payTitle}>Открой для себя полный{'\n'}доступ!</Text>
                     </LinearGradient>
@@ -176,9 +188,9 @@ const ProfileScreen = observer(({navigation}) => {
                         shadowRadius: 20,marginTop:16
                     }}>
                 <TouchableOpacity activeOpacity={1} style={styles.feedbackView}
-                    onPress={() => setSocialModal(true)}
+                    onPress={() => setSocialModal(true)} 
                 >
-                    <View style={{paddingHorizontal:24,paddingVertical:7,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
+                    <View style={{paddingHorizontal:24,paddingVertical:7.5,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
                         <Text style={styles.payTitle}>Связаться с нами</Text>
                     </View>
                 </TouchableOpacity>
@@ -209,20 +221,20 @@ const styles = StyleSheet.create({
         color:Colors.textColor,
     },
     container:{
-        paddingHorizontal:16
+        paddingHorizontal:16,paddingTop:4
     },
     title:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:22,
         lineHeight:25,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-        color:Colors.textColor,
+        color:Colors.textColor,marginBottom:4,
     },
     subtitle:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:12,
         lineHeight:14,
         color:Colors.grayColor,
     },
     payTitle:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
         lineHeight:19,fontWeight:'500',
         color:Colors.textColor,
     },
@@ -232,8 +244,8 @@ const styles = StyleSheet.create({
         color:Colors.textColor,
     },
     versionText:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:10,
-        lineHeight:12,
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
+        lineHeight:14,
         color:Colors.grayColor,marginTop:10,textAlign:'center'
     },
     feedbackView:{

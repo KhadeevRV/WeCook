@@ -8,6 +8,7 @@ import changeNavigationBarColor, {
   hideNavigationBar,
   showNavigationBar,
 } from 'react-native-navigation-bar-color';
+import { Settings } from 'react-native-fbsdk-next';
 
 // "react-native-firebase": "^5.6.0",
 
@@ -15,7 +16,8 @@ type Props = {};
 export default class App extends Component<Props> {
 
   UNSAFE_componentWillMount() {
-    // LogBox.ignoreAllLogs()
+    Settings.initializeSDK()
+    LogBox.ignoreAllLogs()
     changeNavigationBarColor('#000000',true);
     if(Platform.OS === "android") {
       StatusBar.setBackgroundColor('#FFF', true);
