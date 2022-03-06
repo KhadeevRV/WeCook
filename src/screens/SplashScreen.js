@@ -5,7 +5,7 @@ import Common from '../../Utilites/Common'
 import { View } from 'react-native-animatable'
 import common from '../../Utilites/Common'
 import deviceInfoModule, { getUniqueId } from 'react-native-device-info'
-import network, { getMenu, getScreens, authUser, registerUser, getFavors, getTariffs, getHistory } from '../../Utilites/Network'
+import network, { getMenu, getScreens, authUser, registerUser, getFavors, getTariffs, getHistory, payAppleOrAndroid } from '../../Utilites/Network'
 import { observer } from 'mobx-react-lite'
 import FastImage from 'react-native-fast-image'
 import * as RNIap from 'react-native-iap'
@@ -24,6 +24,8 @@ import LinearGradient from 'react-native-linear-gradient'
 import { getBottomSpace, getStatusBarHeight } from 'react-native-iphone-x-helper'
 import OneSignal from 'react-native-onesignal'
 import { getTrackingStatus, requestTrackingPermission } from 'react-native-tracking-transparency';
+import { Settings } from 'react-native-fbsdk-next'
+import changeNavigationBarColor from 'react-native-navigation-bar-color'
 
 function useInterval(callback, delay) {
   const savedCallback = useRef();
@@ -62,6 +64,9 @@ export const SplashScreen = observer(({navigation}) => {
 
   const getStatus = async () => {
     const tracking = await requestTrackingPermission();
+    if(tracking == 'authorized' || tracking === 'unavailable'){
+      Settings.setAdvertiserTrackingEnabled(true)
+    }
     console.warn('tracking',tracking)
   }
 
@@ -86,21 +91,20 @@ export const SplashScreen = observer(({navigation}) => {
       await getTariffs().then(async (items) => {
         await initSubs(items)
       })
-      await getMenu().then(async () => {
-        const urls = []
-        for (let i = 0; i < network.dayDishes.length; i++) {
-          urls.push({uri:network.dayDishes[i].images?.big_webp})
-        }
-        try {
-          await FastImage.preload(urls)
-        } catch (error) {
-          setFuncDone(true)
-          // continue
-        }
-        await getFavors()
-        await getHistory()
+      await getMenu()
+      const urls = []
+      for (let i = 0; i < network.dayDishes.length; i++) {
+        urls.push({uri:network.dayDishes[i].images?.big_webp})
+      }
+      try {
+        await FastImage.preload(urls)
+      } catch (error) {
         setFuncDone(true)
-      }) 
+        // continue
+      }
+      await getFavors()
+      await getHistory()
+      setFuncDone(true)
     } catch (e) {
       console.warn('object',e)
       setErr(true)
@@ -124,12 +128,30 @@ export const SplashScreen = observer(({navigation}) => {
     },
   ]
 
+  //! Анимация
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const changeImage = (prevPlate) => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,useNativeDriver:false
+    }).start(() => {
+      prevPlate + 1 == imgs.length ? setCurrentPlate(0) : setCurrentPlate(prev => prev + 1)
+      prevPlate + 3 == imgs.length ? setAnimDone(true) : null
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,useNativeDriver:false
+      }).start()
+    });
+  }
+
   const [err, setErr] = useState(false)
   const [stop, setStop] = useState(false)
   const [animDone, setAnimDone] = useState(false)
   const [funcDone, setFuncDone] = useState(false)
   const [currentPlate, setCurrentPlate] = useState(0)
-  const delay =  1000
+  const delay =  800
 
   useInterval(() => {
     if(!stop){
@@ -137,13 +159,7 @@ export const SplashScreen = observer(({navigation}) => {
         setStop(true)
       } else {
         currentPlate + 1 == imgs.length ? setCurrentPlate(0) : setCurrentPlate(prev => prev + 1)
-        currentPlate + 2 == imgs.length ? setAnimDone(true) : null
-        // if(currentPlate + 1 == imgs.length){
-        //   setAnimDone(true)
-        //   setCurrentPlate(0)
-        // } else {
-        //   setCurrentPlate(prev => prev + 1)
-        // } 
+        currentPlate + 3 == imgs.length ? setAnimDone(true) : null
       }
     }
   }, delay);
@@ -152,11 +168,28 @@ export const SplashScreen = observer(({navigation}) => {
     allDone()
   }, [animDone, funcDone])
 
+  const checkSub = () => {
+    RNIap.getAvailablePurchases().then(async (value) => {
+      const purchaseDate = new Date(network.user?.subscription?.info?.purchase_date)
+      for (let i = 0; i < value.length; i++) {
+        const transcation = value[i];
+        console.warn('checkSubcheckSub',purchaseDate.toLocaleDateString(),new Date(transcation.transactionDate).toLocaleDateString())
+        if(purchaseDate <= new Date(transcation.transactionDate) || !purchaseDate){
+          console.warn('ЗАПРООООООС',new Date(transcation.transactionDate),transcation.productId)
+          await payAppleOrAndroid(transcation)
+          await authUser()
+          break
+        }
+      }
+    })
+  }
+
   const initSubs = async (items) => {
     try {
       await RNIap.initConnection()
-      await RNIap.getProducts(items).then((products) => console.warn('products: '+JSON.stringify(products)))
-      await RNIap.getSubscriptions(items).then((products) => console.warn('getSubscriptions: '+JSON.stringify(products)))
+      await RNIap.getProducts(items).then((products) => console.warn('productsss: '+JSON.stringify(products)))
+      await RNIap.getSubscriptions(items).then((products) => console.warn('getSubscriptionssss: '+JSON.stringify(products)))
+      network.user?.access ? null : checkSub()
     } catch (error) {
       console.warn('err: ' + error); 
     }
@@ -208,7 +241,7 @@ export const SplashScreen = observer(({navigation}) => {
         <Image source={imgs[currentPlate].url} 
           style={{
             width:common.getLengthByIPhone7(),height:common.getLengthByIPhone7(),
-            position:'absolute',bottom:34 + getBottomSpace()
+            position:'absolute',bottom:34 + getBottomSpace(),
           }}
         />
         <Text style={{

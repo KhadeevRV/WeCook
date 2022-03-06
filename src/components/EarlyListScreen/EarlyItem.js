@@ -33,7 +33,9 @@ export const EarlyItem = observer(({dish,onPress}) => {
                     <Text style={styles.itemSubtitle} numberOfLines={1}>{dish?.persons} {common.declOfNum(dish?.persons,['персона','персоны','персон'])}</Text>
                 </View>                
             </View>
-            <Image source={require('../../../assets/icons/goDown.png')} style={{width:13,height:8,transform:[{rotate:'-90deg'}]}} />
+            {network.canOpenRec(dish.id) ? 
+            <Image source={require('../../../assets/icons/goDown.png')} style={{width:13,height:8,transform:[{rotate:'-90deg'}]}} /> :
+            <Image source={require('../../../assets/icons/lock.png')} style={{width:22,height:22,}} />}
         </TouchableOpacity>
         </View>
     )

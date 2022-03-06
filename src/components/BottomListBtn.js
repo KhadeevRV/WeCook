@@ -26,7 +26,7 @@ const BottomListBtn = observer(({navigation}) => {
                     <Text style={{...styles.headerSubitle,}}>{network.listDishes.length}</Text>
                 </View>
                 <Text style={styles.addsTitle}>
-                    {common.declOfNum(network.listDishes.length,['Рецепт','Рецепта','Рецептов'])} в списке
+                    {common.declOfNum(network.listDishes.length,['Рецепт','Рецепта','Рецептов'])} в Списке продуктов
                 </Text>
                 </View>
                 {/* <View style={{flexDirection:'row',alignItems:'center'}}>

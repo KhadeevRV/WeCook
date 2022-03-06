@@ -10,18 +10,21 @@ import changeNavigationBarColor, {
 } from 'react-native-navigation-bar-color';
 import { Settings } from 'react-native-fbsdk-next';
 
-// "react-native-firebase": "^5.6.0",
 
 type Props = {};
 export default class App extends Component<Props> {
 
+  checkLink = () => {
+    
+  }
+
   UNSAFE_componentWillMount() {
     Settings.initializeSDK()
-    LogBox.ignoreAllLogs()
+    // LogBox.ignoreAllLogs()
     changeNavigationBarColor('#000000',true);
     if(Platform.OS === "android") {
-      StatusBar.setBackgroundColor('#FFF', true);
-      StatusBar.setBarStyle('dark-content', true);
+      // StatusBar.setBackgroundColor('#FFF', true);
+      // StatusBar.setBarStyle('dark-content', true);
     } else {
       StatusBar.setBarStyle('dark-content', true);
     }

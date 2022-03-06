@@ -107,7 +107,7 @@ const ListScreen = observer(({navigation}) => {
         if(network.canOpenRec(rec.id)){
             navigation.navigate('ReceptScreen',{rec:rec})
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
 

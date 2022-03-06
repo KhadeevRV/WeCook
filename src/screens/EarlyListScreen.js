@@ -131,9 +131,6 @@ const EarlyListScreen = observer(({navigation}) => {
                 </View>}
                 renderItem={({item}) => item}
             />
-            <View style={{marginTop:20}}>
-                <ActivityIndicator animating={true} color={Colors.yellow} />
-            </View>
             {network.listDishes.length ? <BottomListBtn navigation={navigation} />  : null}
         </View>
     )

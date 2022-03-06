@@ -39,7 +39,7 @@ const PayWallItem = ({plan,onPress=() => null,pressed}) => {
                     height: 1,
                     borderBottomColor: '#A157FF',
                     borderBottomWidth: 1,
-                    borderRadius:1
+                    borderRadius:Platform.OS == 'android' ? 0 : 1
                 }}/>
                 <Text style={styles.desc} onLayout={(e) => setlinewidth(5 + e.nativeEvent.layout.width)}>{plan?.old_price}</Text>
                 </> : null}

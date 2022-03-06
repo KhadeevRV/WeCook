@@ -1,5 +1,5 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
-import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, ImageBackground, Animated, SafeAreaView, Alert,Share, AsyncStorage } from 'react-native'
+import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, ImageBackground, Animated, SafeAreaView, Alert,Share, AsyncStorage, Linking } from 'react-native'
 import {FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
 import network, { authUser, getFavors, getList, getMenu, listClear, updateInfo } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
@@ -17,7 +17,7 @@ import Rate, { AndroidMarket } from 'react-native-rate'
 import { PrivacyModal } from '../components/ProfileScreen/PrivacyModal'
 import Spinner from 'react-native-loading-spinner-overlay'
 
-const FooterItem = ({title,onPress}) => {
+export const FooterItem = ({title,onPress}) => {
     return(
         <TouchableOpacity style={{height:50,justifyContent:'center',alignItems:'center'}} activeOpacity={1} onPress={() => onPress()}>
             <Text style={styles.footerText}>{title}</Text>
@@ -32,6 +32,24 @@ const ProfileScreen = observer(({navigation}) => {
     const [privacyModal, setprivacyModal] = useState(false)
     const scrollY = useRef(new Animated.Value(0)).current
     const [loading, setloading] = useState(false)
+    const [textMode, setTextMode] = useState('privacy')
+
+    const rateApp = () => {
+        let options = {
+            AppleAppID:"1577136146",
+            GooglePackageName:"app.wecook",
+            OtherAndroidURL:"http://www.randomappstore.com/app/47172391",
+            preferredAndroidMarket: AndroidMarket.Google,
+            preferInApp:false,
+            openAppStoreIfInAppFails:true,
+            fallbackPlatformURL:"http://www.mywebsite.com/myapp.html",
+        }
+        Rate.rate(options, (success)=>{
+            if (success) {
+              console.warn(success)
+            }
+        })
+    }
 
     const header = [
         <View style={styles.header}>
@@ -52,73 +70,103 @@ const ProfileScreen = observer(({navigation}) => {
 
     const bodyArr = [
         {
+            title:'Твой профиль',
             id:1,
-            title:'Детали аккаунта',
-            height:56,
-            onPress: () => navigation.navigate('DetailsScreen'),
-            icon:{
-                source:require('../../assets/icons/profile.png'),
-                style:{width:20,height:22,}
-            }
-        },
-        {
-            id:2,
-            title:'Настройки',
-            height:56,
-            onPress: () => navigation.navigate('SettingsScreen'),
-            icon:{
-                source:require('../../assets/icons/settings.png'),
-                style:{width:22,height:24,}
-            }
+            body:[{
+                id:1,
+                title:'Детали аккаунта',
+                height:56,
+                onPress: () => navigation.navigate('DetailsScreen'),
+                icon:{
+                    source:require('../../assets/icons/profile.png'),
+                    style:{width:20,height:22,}
+                }
+            },
+            {
+                id:2,
+                title:'Настройки',
+                height:56,
+                onPress: () => navigation.navigate('SettingsScreen'),
+                icon:{
+                    source:require('../../assets/icons/settings.png'),
+                    style:{width:22,height:24,}
+                }
+            }]
+        },{
+            title:'Поддержи нас',
+            id:1,
+            body:[{
+                id:1,
+                title:'Оценить приложение',
+                height:56,
+                onPress: () => rateApp(),
+                icon:{
+                    source:require('../../assets/icons/blackStar.png'),
+                    style:{width:24,height:24}
+                }
+            },
+            {
+                id:2,
+                title:'Пригласить знакомых',
+                height:56,
+                onPress: () => Share.share({message:`Отличное приложение WeCook. Рекомендую! https://wecookapp.page.link/getApp`}),
+                icon:{
+                    source:require('../../assets/icons/profilePlus.png'),
+                    style:{width:20,height:20,}
+                }
+            }]
         }
     ]
 
-    const body = []
-    for (let i = 0; i < bodyArr.length; i++) {
-        item = bodyArr[i]
-        body.push(
-            <ProfileItem title={item.title} icon={item.icon} height={item.height} onPress={item.onPress} key={item.id} />
+    const renderBody = (item) => {
+        const body = []
+        for (let i = 0; i < item?.body.length; i++) {
+            let element = item?.body[i]
+            body.push(
+                <ProfileItem title={element.title} icon={element.icon} height={element.height} onPress={element.onPress} key={element.id} />
+            )
+        }
+        return(
+            <View style={{marginTop:41}}>
+                <Text style={styles.itemTitle} allowFontScaling={false}>{item.title}</Text>
+                {body}
+            </View>
         )
     }
 
-    console.warn(network.user)
 
     const footerArr = [
-        {
-            id:1,
-            title:'Оценить приложение',
-            onPress: () => {
-                let options = {
-                    AppleAppID:"1540264589",
-                    GooglePackageName:"com.foodplan",
-                    OtherAndroidURL:"http://www.randomappstore.com/app/47172391",
-                    preferredAndroidMarket: AndroidMarket.Google,
-                    preferInApp:false,
-                    openAppStoreIfInAppFails:true,
-                    fallbackPlatformURL:"http://www.mywebsite.com/myapp.html",
-                }
-                Rate.rate(options, (success)=>{
-                    if (success) {
-                      console.warn(success)
-                    }
-                })
-            },
-        },
-        {
-            id:2,
-            title:'Поделиться приложением',
-            onPress: () => {
-                Share.share({
-                    message:
-                      `Отличное приложение WeCook. Рекомендую!`,
-                  })
-            },
-        },
+        // {
+        //     id:1,
+        //     title:'Оценить приложение',
+        //     onPress: () => rateApp(),
+        // },
+        // {
+        //     id:2,
+        //     title:'Поделиться приложением',
+        //     onPress: () => {
+        //         Share.share({
+        //             message:
+        //               `Отличное приложение WeCook. Рекомендую!`,
+        //           })
+        //     },
+        // },
         {
             id:3,
+            title:'Пользовательское соглашение',
+            // onPress: () => Linking.openURL('https://wecook.app/politic'),
+            onPress: () => {
+                setTextMode('agreement')
+                setprivacyModal(true)
+            },
+        },{
+            id:4,
             title:'Политика конфиденциальности',
-            onPress: () => setprivacyModal(true),
-        }
+            onPress: () => {
+                setTextMode('privacy')
+                setprivacyModal(true)
+            },
+        },
     ]
 
     const footer = []
@@ -158,26 +206,28 @@ const ProfileScreen = observer(({navigation}) => {
                 )}
             >
                 <View style={styles.container}>
-                    <Animated.Text style={[styles.title,
+                    <Animated.Text onPress={() => network?.user?.name ? null : navigation.navigate('ChangeNameEmailScreen',{what:'name'})} 
+                    style={[styles.title,
                         {color:network?.user?.name ? Colors.textColor : Colors.grayColor}
                     ]}>
                         {network?.user?.name ?? 'Как тебя зовут?'}
                     </Animated.Text>
                     <Text style={styles.subtitle}>{network?.user?.phone ? '+' + network?.user?.phone : ''}</Text>
                     {network.user?.access ? null :
-                    <TouchableOpacity style={{marginTop:24,marginBottom:16}} activeOpacity={1}
-                        onPress={() => navigation.navigate('PayWallScreen',{data:network.paywalls.paywall_sale})}>
-                    <LinearGradient colors={['rgba(235,255,222, 1)', `rgba(167,239,255,1)`]} 
-                            start={{x:0,y:1}}
-                            end={{x:1,y:1}}
-                            locations={[0.4,0.88]}
+                    <TouchableOpacity style={{marginTop:24}} activeOpacity={1}
+                        onPress={() => navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})}>
+                    <View style={{width:14,height:14,borderRadius:10,zIndex:100,backgroundColor:'#FFF',position:'absolute',top:0,right:0,justifyContent:'center',alignItems:'center'}}>
+                    <View style={{width:8,height:8,borderRadius:4,backgroundColor:Colors.yellow}} />
+                    </View>
+                    <ImageBackground source={{uri:network.user?.banner?.image_btn?.big_webp}}
+                    borderRadius={16}
                             style={{paddingHorizontal:16,paddingVertical:21,borderRadius:16}}
                     >
-                        <Text style={styles.payTitle}>Открой для себя полный{'\n'}доступ!</Text>
-                    </LinearGradient>
+                        <Text style={styles.payTitle}>{network.user?.banner?.title_on_btn}</Text>
+                    </ImageBackground>
                     </TouchableOpacity>}
                 </View>
-                {body}
+                {bodyArr.map(item => renderBody(item))}
                 <View style={{
                         shadowColor: "#000",
                         shadowOffset: {
@@ -185,24 +235,24 @@ const ProfileScreen = observer(({navigation}) => {
                             height: 4,
                         },
                         shadowOpacity: 0.08,
-                        shadowRadius: 20,marginTop:16
+                        shadowRadius: 20,marginVertical:16
                     }}>
                 <TouchableOpacity activeOpacity={1} style={styles.feedbackView}
-                    onPress={() => setSocialModal(true)} 
+                    onPress={() => setSocialModal(true)}
                 >
-                    <View style={{paddingHorizontal:24,paddingVertical:7.5,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
+                    <View style={{paddingHorizontal:24,paddingVertical:10.5,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
                         <Text style={styles.payTitle}>Связаться с нами</Text>
                     </View>
                 </TouchableOpacity>
                 </View>
                 {footer}
-                <TouchableOpacity style={{height:50,justifyContent:'center',alignItems:'center'}} activeOpacity={1} onPress={() => exit()}>
+                {/* <TouchableOpacity style={{height:50,justifyContent:'center',alignItems:'center'}} activeOpacity={1} onPress={() => exit()}>
                         <Text style={{...styles.footerText,color:'#FF0000'}} >Выйти</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 <Text style={styles.versionText}>Версия приложения {Config.version}</Text>
             </ScrollView>
             <FeedBackModal modal={socialModal} closeModal={() => setSocialModal(false)} />
-            <PrivacyModal modal={privacyModal} closeModal={() => setprivacyModal(false)}  />
+            <PrivacyModal modal={privacyModal} closeModal={() => setprivacyModal(false)} mode={textMode}  />
         </View>
     )
 })
@@ -233,6 +283,11 @@ const styles = StyleSheet.create({
         lineHeight:14,
         color:Colors.grayColor,
     },
+    itemTitle:{
+        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:18,
+        lineHeight:21,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
+        color:Colors.textColor,marginBottom:10,marginLeft:16
+    },
     payTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
         lineHeight:19,fontWeight:'500',
@@ -249,7 +304,7 @@ const styles = StyleSheet.create({
         color:Colors.grayColor,marginTop:10,textAlign:'center'
     },
     feedbackView:{
-        padding:16,backgroundColor:'#FFF',marginHorizontal:16,borderRadius:16,alignItems:'center',marginBottom:22,
+        padding:20,backgroundColor:'#FFF',marginHorizontal:16,borderRadius:16,alignItems:'center',
         elevation:10,
         shadowColor: "#000",
         shadowOffset: {

@@ -185,7 +185,7 @@ export const IngredientItem = ({item,onPress = () => null,display='flex'}) => {
                     zIndex:0,
                     backgroundColor:'#EEEEEE'
                 }}/>
-                <Image source={{uri:  item?.images?.small_webp}} style={{width:40,height:40,borderRadius:8, marginRight:12,
+                <FastImage source={{uri:  item?.images?.small_webp}} style={{width:40,height:40,borderRadius:8, marginRight:12,
                     opacity: currentItem.is_buyed ? 0.5 : 1,zIndex:100,
                     // marginLeft: currentItem.is_buyed ? 16 : 0
                 }} />

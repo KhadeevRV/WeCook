@@ -17,7 +17,7 @@ const RecipeOfTheDay = ({recept,onPress,blur=false,onSwipeUp= () => null}) => {
         directionalOffsetThreshold: 80
     };
 
-    const navbarHeight = Dimensions.get('screen').height - screenHeight - StatusBar.currentHeight;
+    const navbarHeight = Dimensions.get('screen').height - screenHeight
 
     return (
         <GestureRecognizer config={config} onSwipeUp={() => onSwipeUp()}>

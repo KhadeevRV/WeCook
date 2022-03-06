@@ -17,16 +17,21 @@ const ImageView = ({uri,onPress,vertical}) => {
             colors={['rgba(0, 0, 0, 0)', `rgba(0, 0, 0,.4)`]} 
             style={{width:'100%',height:100,position:'absolute',zIndex:100,bottom:0}}
         />
-        {Platform.OS == 'ios' ? 
         <FastImage source={{uri}}
                 style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
                 height:vertical ? 192 : 176
             }}
         />
-        : <Image source={{uri}}
+        {/* {Platform.OS == 'ios' ? 
+        <FastImage source={{uri}}
+                style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
+                height:vertical ? 192 : 176
+            }}
+        />
+        : <Image source={{uri}} resizeMethod={'resize'}
         style={{width:vertical ? common.getLengthByIPhone7() - 32 : common.getLengthByIPhone7(304),
                 height:vertical ? 192 : 176
-            }}/>}
+            }}/>} */}
     </TouchableOpacity>
     )
 }
@@ -76,11 +81,11 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
         </View>
     ]
     const [refresh, setRefresh] = useState(false)
-    const images = [<ImageView key={recept?.images?.id} uri={recept?.images?.big_webp} vertical={vertical} onPress={() => onPress()} />]
+    const images = [<ImageView key={recept?.images?.id} uri={recept?.images?.middle_webp} vertical={vertical} onPress={() => onPress()} />]
 
     const dots = [<View style={{width:0 == page ? 12 : 4,height:4,borderRadius:4,backgroundColor:'#FFF',opacity:0 == page ? 1 : 0.5,marginRight:4}} key={123} />]
     const screens = []
-    const stepsWithImage = recept?.steps.filter((step) => step?.images?.big_webp)
+    const stepsWithImage = recept?.steps.filter((step) => step?.images?.middle_webp)
     for (let i = 0; i < stepsWithImage.length; i++) {
         const step = stepsWithImage[i]
         i != 0 ? screens.push(i * (common.getLengthByIPhone7() - 32)) : null
@@ -115,7 +120,7 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                 justifyContent:'space-between'}} 
         >
             <View style={{borderTopRightRadius:16,borderTopLeftRadius:16,overflow:'hidden'}}>
-            <ScrollView 
+            <FlatList 
                 horizontal
                 style={{width:'100%',borderTopRightRadius:16,borderTopLeftRadius:16,}}
                 showsHorizontalScrollIndicator={false} scrollEnabled={vertical}
@@ -135,9 +140,12 @@ const DayRecipeCard = observer(({recept,onPress,listHandler,vertical=false}) => 
                         }
                     }, 100);
                 }}
-            >
-                {images}
-            </ScrollView>
+                data={images}
+                initialNumToRender={2}
+                renderItem={({item}) => item}
+            />
+                {/* {images}
+            </FlatList> */}
             </View>
             {vertical ? 
             <View style={{position:'absolute',flexDirection:'row',zIndex:100,top:10,justifyContent:'center',width:'100%'}}>
@@ -200,6 +208,7 @@ const styles = StyleSheet.create({
     },
     title:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:14,
+        fontWeight:'500',
         lineHeight:17,paddingHorizontal:16,
         color:Colors.textColor
     },

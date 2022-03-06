@@ -9,10 +9,12 @@ import Colors from '../constants/Colors'
 import LinearGradient from 'react-native-linear-gradient'
 import { getBottomSpace, getStatusBarHeight } from 'react-native-iphone-x-helper'
 import FavorItem from '../components/FavoriteScreen/FavorItem'
-import network from '../../Utilites/Network'
+import network, { getShortLink } from '../../Utilites/Network'
 import {captureScroll, getSpoingyTransform} from "../animations/SpoingyHelpers"
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import BottomListBtn from '../components/BottomListBtn'
+import Config from '../constants/Config'
+import Share from 'react-native-share'
 
 
 const HolidayMenuScreen = observer(({navigation,route}) => {
@@ -25,6 +27,21 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
     const title = route.params?.title
     const statusHeight = getStatusBarHeight()
     console.warn(data)
+
+    const onShare = async () => {
+        try {
+            const link = Config.apiDomain + 'app/screen/additional-menu'
+            const shortUrl = await getShortLink(link)
+            Share.open({
+                message:`Посмотри какое классное меню на праздник у WeCook!{'\n'}${shortUrl}`
+              },{
+                tintColor:Colors.greenColor
+            });
+        } catch (err) {
+            Alert.alert('Ошибка',err)
+        }
+    };
+
     const header = [
         <View style={[styles.header,{top:useSafeAreaInsets().top}]}>
             <TouchableOpacity activeOpacity={1} 
@@ -41,7 +58,7 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
             </Animated.Text>
             <TouchableOpacity activeOpacity={1} 
                 style={{position:'absolute',right:0,paddingVertical:12,paddingHorizontal:16,zIndex:100}} 
-                onPress={() => navigation.goBack()}
+                onPress={() => onShare()}
             >
                 <Image source={require('../../assets/icons/share.png')} style={{width:18,height:22,tintColor:Colors.textColor}} />
             </TouchableOpacity>
@@ -53,7 +70,7 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
         if(network.canOpenRec(rec.id)){
             navigation.navigate('ReceptScreen',{rec:rec})
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
  
@@ -63,7 +80,7 @@ const HolidayMenuScreen = observer(({navigation,route}) => {
         } else if (network.canOpenRec(recept.id)) {
             network.addToList(recept)
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
     

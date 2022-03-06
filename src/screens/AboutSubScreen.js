@@ -40,9 +40,6 @@ const AboutSubScreen = observer(({navigation}) => {
                 try {
                     await getUserInfo()
                     setLoading(false)
-                    setTimeout(() => {
-                        Alert.alert(Config.appName,'Подписка куплена. Пздравляем!')
-                    }, 200);
                 } catch (error) {
                     console.warn(error)
                     setLoading(false)

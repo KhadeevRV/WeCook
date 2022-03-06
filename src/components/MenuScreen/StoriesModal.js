@@ -35,7 +35,7 @@ export const StoriesModal = observer(({modal, closeModal, stop, setStop,currentP
         setTimeout(() => {
             scroll.current != undefined && scroll.current != null ? scroll.current.scrollTo({x: SCREEN_WIDTH * currentPage, y: 0, animated: false}) : null
         }, 100);  
-        // StatusBar.setHidden(modal)
+        StatusBar.setHidden(modal)
         // if (modal){
         //     if(Platform.OS === "android") {
         //         StatusBar.setBackgroundColor('black', true);

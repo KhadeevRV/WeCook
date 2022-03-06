@@ -1,5 +1,5 @@
 import React, { Component, useRef, useState, useCallback, useEffect } from 'react'
-import { StyleSheet, Text, View,TouchableOpacity, Dimensions,Image, TouchableHighlight, Platform,SafeAreaView, BackHandler, StatusBar, ImageBackground} from 'react-native'
+import { StyleSheet, Text, View,TouchableOpacity, Dimensions,Image, TouchableHighlight, Platform,SafeAreaView, BackHandler, StatusBar, ImageBackground, Alert} from 'react-native'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import BottomSheet from 'reanimated-bottom-sheet'
 import { getStatusBarHeight, isIphoneX, getBottomSpace } from 'react-native-iphone-x-helper'
@@ -18,9 +18,11 @@ import { GestureHandlerRefContext } from '@react-navigation/stack';
 import { useScrollToTop } from '@react-navigation/native'
 import FastImage from 'react-native-fast-image'
 import KeepAwake from 'react-native-keep-awake';
-import network from '../../Utilites/Network'
+import network, { getShortLink } from '../../Utilites/Network'
 import { runInAction } from 'mobx'
 import { AppEventsLogger } from "react-native-fbsdk-next";
+import Modal from 'react-native-modal'
+import { Modalize } from 'react-native-modalize';
 
 const Step = ({step,count}) => {
     const subtitleView = []
@@ -43,7 +45,7 @@ const Step = ({step,count}) => {
         source={{uri:step?.images?.big_webp}} borderRadius={16}
         /> :
         <Image style={{width:'100%',height:common.getLengthByIPhone7(232),borderRadius:16}}
-            source={{uri:step?.images?.big_webp}} borderRadius={16}
+            source={{uri:step?.images?.big_webp}} borderRadius={16} resizeMethod='resize'
         />}
         </> : null}
         <View style={{padding:16,backgroundColor:'#F5F5F5',borderRadius:16,
@@ -68,7 +70,7 @@ const Ingredient = ({ingredient,count}) => {
     return(
     <View style={{marginTop:8,maxWidth:common.getLengthByIPhone7(80)}}>
         <Image style={{width:common.getLengthByIPhone7(80),height:80,marginBottom:5}}
-            source={{uri:ingredient?.images?.small_webp}} borderRadius={16}
+            source={{uri:ingredient?.images?.small_webp}} borderRadius={16} resizeMethod='resize'
         />
         <Text style={styles.ingredientTitle}>{ingredient?.name}</Text>
         {(count * parseFloat(ingredient.count)) == 0 ? 
@@ -113,6 +115,7 @@ const ReceptScreen = observer(({navigation,route}) => {
 
     const currentRec = route.params.rec
     const fromHistory = route.params?.fromHistory
+    const fromDays = route.params?.fromDays
     const screenHeight = Dimensions.get('window').height
     const steps = []
     const ingredients = []
@@ -122,6 +125,9 @@ const ReceptScreen = observer(({navigation,route}) => {
     const isInFavor = network.favorDishes.length ? !!network.favorDishes.filter((item) => item.id == currentRec.id).length : false
     const [time, setTime] = useState(0)
 
+    const [modal, setmodal] = useState(true)
+    const modalizeRef = useRef(null);
+    
     for (let i = 0; i < currentRec?.steps?.length; i++) {
         steps.push(<Step step={currentRec?.steps[i]} key={currentRec?.steps[i].id} count={persons} />)
     }
@@ -137,13 +143,16 @@ const ReceptScreen = observer(({navigation,route}) => {
     }
 
     const onShare = async () => {
-        AppEventsLogger.logPurchase(15, "USD", { param: "value" });
-        const result = await Share.open({
-          message:`Посмотри, какой удачный рецепт я нашла в приложении Foodplan${'\n'}${currentRec.share_link}`
-        },{
-          tintColor:Colors.greenColor
-        });
-        console.warn(result)
+        try {
+            const shortUrl = await getShortLink(currentRec.share_link)
+            Share.open({
+                message:`Посмотри, какой удачный рецепт я нашла в приложении WeCook${'\n'}${shortUrl}`
+              },{
+                tintColor:Colors.greenColor
+            });
+        } catch (err) {
+            Alert.alert('Ошибка',err)
+        }
     };
 
     const changeRecPersons = (newPersons) => {
@@ -171,7 +180,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                 style={{
                     width:'100%', height:common.getLengthByIPhone7(520),
                     justifyContent:'flex-end',borderTopRightRadius:24,borderTopLeftRadius:24,
-                    zIndex:100
+                    zIndex:100,
                 }}
                 borderTopLeftRadius={24} borderTopRightRadius={24}>
                     <LinearGradient colors={['rgba(0, 0, 0, 0)', `rgba(0, 0, 0, .3)`]} >
@@ -201,17 +210,19 @@ const ReceptScreen = observer(({navigation,route}) => {
                         </View>
                     </View>
                     </LinearGradient>
-                    {Platform.OS == 'ios' ? 
+                    {/* {Platform.OS == 'ios' ?  */}
                     <FastImage style={{width:'100%', height:common.getLengthByIPhone7(520),justifyContent:'flex-end',borderTopRightRadius:24,borderTopLeftRadius:24,
                         position:'absolute',zIndex:-1}} 
                         source={{uri:currentRec?.images?.big_webp,}} key={currentRec?.images?.big_webp} 
                         borderTopLeftRadius={24} borderTopRightRadius={24}
-                    /> :
+                    /> 
+                    {/* :
                     <Image style={{width:'100%', height:common.getLengthByIPhone7(520),justifyContent:'flex-end',borderTopRightRadius:24,borderTopLeftRadius:24,
                         position:'absolute',zIndex:-1}} 
                         source={{uri:currentRec?.images?.big_webp,}} key={currentRec?.images?.big_webp} 
                         borderTopLeftRadius={24} borderTopRightRadius={24}
-                    />}
+                    />
+                    } */}
                 </View>
                 
             {/* <TouchableOpacity style={{height:60,backgroundColor:'pink'}} 
@@ -226,7 +237,7 @@ const ReceptScreen = observer(({navigation,route}) => {
                 <Text style={styles.title}>{currentRec?.name}</Text>
                 <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-around',marginBottom:common.getLengthByIPhone7(28)}}>
                     <TouchableOpacity style={{flexDirection:'row',alignItems:'center'}} activeOpacity={1}
-                        onPress={() => isInFavor ? network.deleteFromFavor(currentRec) : network.addToFavor(currentRec)}
+                        onPress={() => isInFavor ? network.deleteFromFavor(currentRec) : network.addToFavor(currentRec,navigation)}
                     >
                         <Image style={{width:20,height:19,marginRight:15}} source={isInFavor ? require('../../assets/icons/redHeart.png') : require('../../assets/icons/heart.png')} />
                         <Text style={styles.subText}>{isInFavor ? 'В любимом' : 'В любимое'}</Text>
@@ -304,8 +315,8 @@ const ReceptScreen = observer(({navigation,route}) => {
                         Этапы
                     </Text>
                     {steps}
-                    <Text style={{...styles.title,marginTop:49,alignSelf:'center'}}>
-                        Приятного аппетита
+                    <Text style={{...styles.title,marginTop:49,alignSelf:'center',marginBottom:200}}>
+                        Приятного аппетита!
                     </Text>
                 </View>
             </>
@@ -321,11 +332,11 @@ const ReceptScreen = observer(({navigation,route}) => {
 
     useEffect(() => {
         const onFocus = navigation.addListener('focus', () => {
-        BackHandler.addEventListener('hardwareBackPress', () => navigation.goBack());
+        modalizeRef.current?.open();
         if(Platform.OS == 'android'){
-                StatusBar.setBackgroundColor('transparent', true);
-                StatusBar.setBarStyle('light-content', true);
-                StatusBar.setTranslucent(true)
+                fromDays ? StatusBar.setBackgroundColor('transparent', true) : StatusBar.setBackgroundColor('rgba(0,0,0,.4)', true)
+                StatusBar.setBarStyle('light-content', true)
+                fromDays ? StatusBar.setTranslucent(true) : null
             }
         });
         return onFocus;
@@ -333,6 +344,7 @@ const ReceptScreen = observer(({navigation,route}) => {
 
     useEffect(() => {
         const onBlur = navigation.addListener('blur', () => {
+            runInAction(() => network.rateApp('recept'))
             if(Platform.OS == 'ios'){
                 StatusBar.setBarStyle('dark-content', true);
             } else {
@@ -344,65 +356,72 @@ const ReceptScreen = observer(({navigation,route}) => {
         return onBlur;
     }, [navigation]);
 
+    const renderClose = () => {
+        return (
+            <TouchableHighlight style={{width:36,height:36,borderRadius:18,position:'absolute',
+                top: 10 ,
+                padding:11,right:10,zIndex:10000,
+                justifyContent:'center',alignItems:'center',backgroundColor:Platform.select({ ios: null, android: '#E5E5E5' }),
+                overflow:'hidden',}} onPress={() => modalizeRef.current.close()} underlayColor={null}>
+                <>
+                {Platform.OS == 'ios' ?
+                <BlurView 
+                    style={{
+                    position: "absolute",
+                    top: 0,left: 0,bottom: 0,right: 0,
+                    borderRadius:17
+                    }}
+                    blurType="xlight"
+                    blurAmount={24}
+                    blurRadius={24}
+                    reducedTransparencyFallbackColor={'#FFF'}
+                /> : null}
+                <Image source={require('../../assets/icons/closeModal.png')} style={{width:10,height:10,tintColor:Colors.textColor}} />
+                </>
+            </TouchableHighlight>
+        )
+    }
+
+    const renderList = () => {
+        if(isInList){
+            return(
+                <TouchableHighlight style={{width:56,height:56,borderRadius:28,position:'absolute',
+                    bottom: getBottomSpace() +  37,right:10,zIndex:10000,overflow:'hidden',
+                    justifyContent:'center',alignItems:'center',
+                    backgroundColor:Colors.yellow}} onPress={() => network.deleteFromList(currentRec)} underlayColor={Colors.underLayYellow}>
+                    <Image source={require('../../assets/icons/complete.png')} style={{width:18,height:14}} />
+                </TouchableHighlight>
+            )
+        }
+        return(
+            <TouchableHighlight style={{height:56,borderRadius:28,position:'absolute',paddingHorizontal:22,
+                bottom: getBottomSpace() +  37,right:10,zIndex:10000,overflow:'hidden',
+                justifyContent:'center',alignItems:'center',
+                backgroundColor:Colors.yellow}} onPress={() => network.addToList(currentRec)} underlayColor={Colors.underLayYellow}>
+                <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <Image source={require('../../assets/icons/list.png')} style={{width:18,height:23,marginRight:12}} />
+                    <Text style={styles.subText}>В список</Text>
+                </View>
+            </TouchableHighlight>
+        )
+    }
 
     return (
         <>
-        <SafeAreaView/>
-        <KeepAwake />
-        <GestureHandlerRefContext.Consumer>
-        {ref => (
-        <View style={{overflow:'hidden',borderTopLeftRadius:24,borderTopRightRadius:24,marginTop:Platform.select({ ios: 0, android: getStatusBarHeight() })}}>
-        <ScrollView
-            bounces={false}
-            waitFor={ref}
-            style={{backgroundColor:'#FFF',borderTopLeftRadius:24,borderTopRightRadius:24,}}
-            contentContainerStyle={{paddingBottom:120}}
-            showsVerticalScrollIndicator={false} 
-            onScroll={onScroll}
-            scrollEventThrottle={8}
+        <Modalize ref={modalizeRef}
+            handleStyle={{display:'none'}}
+            overlayStyle={{}}
+            onClosed={() => navigation.goBack()}
+            modalHeight={Dimensions.get('window').height - Platform.select({ios:20 + getStatusBarHeight(), android: 0})}
+            withOverlay={false}
+            modalStyle={{borderTopLeftRadius:24,borderTopRightRadius:24,}}
+            scrollViewProps={{showsVerticalScrollIndicator:false,bounces:false}}
+            HeaderComponent={() => renderClose()}
+            FooterComponent={() => renderList()}
         >
+        <KeepAwake />
             {content}
-        </ScrollView>
-        <TouchableHighlight style={{width:36,height:36,borderRadius:18,position:'absolute',
-            top: 10,padding:11,right:10,zIndex:100,
-            justifyContent:'center',alignItems:'center',backgroundColor:Platform.select({ ios: null, android: '#E5E5E5' }),
-            overflow:'hidden',}} onPress={() => navigation.goBack()} underlayColor={null}>
-            <>
-            {Platform.OS == 'ios' ?
-            <BlurView 
-                style={{
-                position: "absolute",
-                top: 0,left: 0,bottom: 0,right: 0,
-                borderRadius:17
-                }}
-                blurType="xlight"
-                blurAmount={24}
-                blurRadius={24}
-                reducedTransparencyFallbackColor={'#FFF'}
-            /> : null}
-            <Image source={require('../../assets/icons/closeModal.png')} style={{width:10,height:10,tintColor:Colors.textColor}} />
-            </>
-        </TouchableHighlight>
-        {isInList ? 
-        <TouchableHighlight style={{width:56,height:56,borderRadius:28,position:'absolute',
-            bottom: getBottomSpace() +  37,right:10,zIndex:100,overflow:'hidden',
-            justifyContent:'center',alignItems:'center',
-            backgroundColor:Colors.yellow}} onPress={() => network.deleteFromList(currentRec)} underlayColor={Colors.underLayYellow}>
-            <Image source={require('../../assets/icons/complete.png')} style={{width:18,height:14}} />
-        </TouchableHighlight> : 
-        <TouchableHighlight style={{height:56,borderRadius:28,position:'absolute',paddingHorizontal:22,
-            bottom: getBottomSpace() +  37,right:10,zIndex:100,overflow:'hidden',
-            justifyContent:'center',alignItems:'center',
-            backgroundColor:Colors.yellow}} onPress={() => network.addToList(currentRec)} underlayColor={Colors.underLayYellow}>
-            <View style={{flexDirection:'row',alignItems:'center'}}>
-                <Image source={require('../../assets/icons/list.png')} style={{width:18,height:23,marginRight:12}} />
-                <Text style={styles.subText}>В список</Text>
-            </View>
-        </TouchableHighlight>}
-        </View>
-        )}
-        </GestureHandlerRefContext.Consumer>
-        
+        </Modalize>
         <Notification notif={notif} />
         </>
     )

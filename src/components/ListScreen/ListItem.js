@@ -44,12 +44,12 @@ const ListItem = observer(({recept,onPress,eyeHandler}) => {
         </TouchableOpacity>
         </View>
     ]
-    const image = Platform.OS == 'ios' ? 
-    <FastImage source={{uri:recept?.images?.big_webp}}
+    // const image = Platform.OS == 'ios' ? 
+    const image = <FastImage source={{uri:recept?.images?.big_webp}}
         style={{width:'100%',height:common.getLengthByIPhone7(80),borderTopLeftRadius:16,borderTopRightRadius:16}} />
-    : 
-    <Image source={{uri:recept?.images?.big_webp}}
-        style={{width:'100%',height:common.getLengthByIPhone7(80),borderTopLeftRadius:16,borderTopRightRadius:16}} />
+    // : 
+    // <Image source={{uri:recept?.images?.big_webp}}
+    //     style={{width:'100%',height:common.getLengthByIPhone7(80),borderTopLeftRadius:16,borderTopRightRadius:16}} />
 
     const personsIcons = []
 

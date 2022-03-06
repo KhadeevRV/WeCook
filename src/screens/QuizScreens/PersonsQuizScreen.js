@@ -81,8 +81,8 @@ const PersonsQuizScreen = observer(({navigation}) => {
 
     const answerHandler = (item) => {
         sendAnswer(screen?.request_to,'SecondQuizScreen',item?.text,undefined,undefined,item.id)
-        runInAction(() => network.user.persons = item.id)
-        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+        network.changeProfilePersons(item.id)
+        if(screen?.next_board == 'LoginScreen' && !!network.user?.phone){
             navigation.navigate('MainStack')
         } else {
             navigation.navigate(screen?.next_board)
@@ -90,9 +90,9 @@ const PersonsQuizScreen = observer(({navigation}) => {
     }
     
     const skip = () => {
-        runInAction(() => network.user.persons = screen?.default)
+        network.changeProfilePersons(screen?.default)
         sendAnswer(screen?.request_to,'SecondQuizScreen',undefined,undefined,undefined,screen?.default)
-        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+        if(screen?.next_board == 'LoginScreen' && !!network.user?.phone){
             navigation.navigate('MainStack')
         } else {
             navigation.navigate(screen?.next_board)
@@ -102,7 +102,7 @@ const PersonsQuizScreen = observer(({navigation}) => {
     return (
         <>
         <SafeAreaView backgroundColor={"#FFF"} />
-        <SkipHeader skip={() => skip()} goBack={() => navigation.goBack()} />
+        <SkipHeader skip={() => skip()} goBack={() => navigation.goBack()} withSkip={screen?.continue_step} />
         <Animated.View style={{opacity:fadeAnim,flex:1,backgroundColor:'#FFF',transform:[{translateY:marginAnim}]}}>
         <FlatList
             showsVerticalScrollIndicator={false}

@@ -24,7 +24,7 @@ const FavoriteScreen = observer(({navigation}) => {
         if(network.canOpenRec(rec.id)){
             navigation.navigate('ReceptScreen',{rec:rec})
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
  
@@ -34,7 +34,7 @@ const FavoriteScreen = observer(({navigation}) => {
         } else if (network.canOpenRec(recept.id)) {
             network.addToList(recept)
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
 
@@ -64,6 +64,12 @@ const FavoriteScreen = observer(({navigation}) => {
             <View style={{flexDirection:'row',alignItems:'center',position:'absolute',right:0}}>
                 <TouchableOpacity activeOpacity={1} style={{paddingVertical:12,paddingHorizontal:16}} onPress={() => setFilterModal(true)}>
                     <Image source={require('../../assets/icons/filter.png')} style={{width:20,height:19}} />
+                    {currentFilters.length == 0 || currentFilters.length == 5 ? null :
+                        <View style={{width:10,height:10,borderRadius:10,
+                            backgroundColor:'#FFF',position:'absolute',top:11,right:12,justifyContent:'center',alignItems:'center',zIndex:10}}>
+                            <View style={{width:6,height:6,borderRadius:3,backgroundColor:Colors.yellow,position:'absolute',}} />
+                        </View>
+                    }
                 </TouchableOpacity>
             </View>
         </View>
@@ -91,7 +97,7 @@ const FavoriteScreen = observer(({navigation}) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{padding:16}}
                 data={filteredFavors}
-                extraData={network.favorDishes}
+                extraData={network.favorDishes} initialNumToRender={3}
                 keyExtractor={(item, index) => item.id} 
                 renderItem={({item,index}) => <FavorItem recept = {item} onPress={() => openRec(item)} listHandler={(isInList,recept) => listHandler(isInList,recept)} key={item?.id} />}
             /> : 

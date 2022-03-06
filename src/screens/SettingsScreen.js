@@ -1,24 +1,18 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
 import { StyleSheet, Text, View, Image, Platform, TouchableOpacity, SafeAreaView, Animated, Dimensions, Alert,Share } from 'react-native'
 import {FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
-import network, { getList, listClear } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import { runInAction } from 'mobx'
 import {Btn} from '../components/Btn'
 import common from '../../Utilites/Common'
 import Colors from '../constants/Colors'
-import DayRecipeCard from '../components/MenuScreen/DayRecipeCard'
-import LinearGradient from 'react-native-linear-gradient'
-import ProfileItem from '../components/ProfileScreen/ProfileItem'
-import DropShadow from 'react-native-drop-shadow'
-import Config from '../constants/Config'
-import { FeedBackModal } from '../components/ProfileScreen/FeedBackModal'
 import { Switch } from 'react-native-switch';
+import network, { updateInfo } from '../../Utilites/Network'
 
 
 const SettingsScreen = observer(({navigation}) => {
 
-    const [isEnabled, setIsEnabled] = useState(true)
+    const [isEnabled, setIsEnabled] = useState(network.user?.show_push ?? false)
  
     const header = [
         <View style={styles.header}>
@@ -34,7 +28,8 @@ const SettingsScreen = observer(({navigation}) => {
 
     const toggleSwitch = (val) => {
         console.warn(val)
-        // updateInfo(undefined,undefined,undefined,undefined,!isEnabled)
+        updateInfo('push_active',!isEnabled)
+        runInAction(() => network.user['show_push'] = val)
         setIsEnabled(val)
     }
 

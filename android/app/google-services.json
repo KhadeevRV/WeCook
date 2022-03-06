@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1037271236824",
+    "project_id": "wecook-8e021",
+    "storage_bucket": "wecook-8e021.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1037271236824:android:33da0e44ce54d888c557ad",
+        "android_client_info": {
+          "package_name": "app.wecook"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1037271236824-2d0qths3m9vbq5nuu65eakdbcqivt5uh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.wecook",
+            "certificate_hash": "90de214be129329e4d024ccb5603ea43f7382af5"
+          }
+        },
+        {
+          "client_id": "1037271236824-1815vbrerbksf4dafa6df7sg9irurfi9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGGciXDtZp7uinzzyrIlsoDvi78uT7lQI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1037271236824-1815vbrerbksf4dafa6df7sg9irurfi9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1037271236824-qnopmnfkbitij357o8tg76e7bliqglm9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "ru.foodstar.app",
+                "app_store_id": "1577136146"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

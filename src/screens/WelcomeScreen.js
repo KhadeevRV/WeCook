@@ -1,5 +1,5 @@
 import React, { Component,useState,useEffect } from 'react'
-import { StyleSheet, Text, View,SafeAreaView, Animated, Platform, KeyboardAvoidingView } from 'react-native'
+import { StyleSheet, Text, View,SafeAreaView, Animated, Platform, KeyboardAvoidingView, BackHandler } from 'react-native'
 import { TouchableOpacity, FlatList, ScrollView, TextInput } from 'react-native-gesture-handler'
 import network, { getList, sendAnswer } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
@@ -11,6 +11,8 @@ import Colors from '../constants/Colors'
 import Spinner from 'react-native-loading-spinner-overlay'
 import Config from '../constants/Config'
 import QuizAnimation from '../animations/QuizAnimation'
+import { useFocusEffect } from '@react-navigation/native'
+import changeNavigationBarColor from 'react-native-navigation-bar-color'
 
 
 const WelcomeScreen = observer(({navigation}) => {
@@ -30,6 +32,20 @@ const WelcomeScreen = observer(({navigation}) => {
         startAnim()
     }, [])
 
+    useFocusEffect(
+        React.useCallback(() => {
+          const onBackPress = () => {
+            return true;
+          };
+          changeNavigationBarColor('#F5F5F5',true);
+          BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    
+          return () =>
+            BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        }, []),
+    );
+
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -38,11 +54,11 @@ const WelcomeScreen = observer(({navigation}) => {
             contentContainerStyle={{backgroundColor:'#FFF'}}
         >
         <SafeAreaView />
-        <SkipHeader skip={() => navigation.navigate(screen?.next_board)} withBack={false} />
+        <SkipHeader skip={() => navigation.navigate(screen?.next_board)} withBack={false} withSkip={screen?.continue_step} />
         <ScrollView style={{backgroundColor:'#FFF',paddingTop:8}}>
             <View style={{paddingHorizontal:16}}>
                 <Animated.View style={{opacity:fadeAnim,transform:[{translateY:marginAnim}]}}>
-                <Text style={styles.title}>Добро пожаловать в Foodly</Text>
+                <Text style={styles.title}>Добро пожаловать в WeCook</Text>
                 <Text style={styles.subtitle}>Как мы можем к тебе обращаться?</Text>
                 </Animated.View>
                 <Animated.View style={{transform:[{translateY:contentMargin}]}}>
@@ -62,14 +78,14 @@ const WelcomeScreen = observer(({navigation}) => {
                 <Btn title={'Далее'} onPress={() => nextScreen()}
                     customTextStyle={{fontSize:16,lineHeight:16,fontWeight:'500'}}
                     backgroundColor={Colors.yellow} underlayColor={Colors.underLayYellow} disabled={!name.length} />
-                <View style={{flexDirection:'row',alignSelf:'center'}}>
+                {/* <View style={{flexDirection:'row',alignSelf:'center'}}>
                     <Text style={styles.descr}>Уже есть аккаунт? </Text>
                     <Text style={{...styles.descr,fontWeight:Platform.select({ ios: '800', android: 'bold' }),marginLeft:8}} 
                         onPress={() => navigation.navigate('LoginScreen')}
                     >
                         Войти
                     </Text>
-                </View>
+                </View> */}
         </View>
         <SafeAreaView />
         </KeyboardAvoidingView>

@@ -3,6 +3,7 @@ import {Image,View,Text, AsyncStorage, Platform, Dimensions} from 'react-native'
 import { createStackNavigator, TransitionSpecs, TransitionPresets } from '@react-navigation/stack'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import analytics from '@react-native-firebase/analytics';
 
 import WelcomeScreen from '../screens/WelcomeScreen';
 import ReceptScreen from '../screens/ReceptScreen';
@@ -30,6 +31,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import EarlyListScreen from '../screens/EarlyListScreen';
 import HolidayMenuScreen from '../screens/HolidayMenuScreen';
 import AboutSubScreen from '../screens/AboutSubScreen';
+import { runInAction } from 'mobx';
 
 
 const SlideFromBottom = {...TransitionPresets.ModalSlideFromBottomIOS}
@@ -83,6 +85,7 @@ const MainStack = () => {
       return(
       {headerShown: false,
         gestureEnabled:true,
+        animationEnabled:route.route.name == 'ReceptScreen' ? false : true,
         ...slideFromRightScreens.find(screen => screen == routeName)? SlideFromRight: SlideFromBottom
       })
 
@@ -105,11 +108,12 @@ const MainStack = () => {
       <Stack.Screen name="HolidayMenuScreen" options={{gestureEnabled:true, header:() => null}} initialParams={{fromOnboarding:false}} component={HolidayMenuScreen} />
       <Stack.Screen name="ReceptScreen" component={ReceptScreen} 
       options={(route) => {
-      return({cardOverlayEnabled: true,
-        cardStyle: {backgroundColor: 'transparent',opacity:1,},
-        gestureEnabled:route?.route?.params?.gestureEnable ?? true,
+      return({
+        cardOverlayEnabled: true,
+        cardStyle: {backgroundColor: 'transparent',opacity:1},
+        // gestureEnabled:route?.route?.params?.gestureEnable ?? true,
         cardOverlay:() => <View style={{backgroundColor:'#000',height:'100%',opacity:0.4}}/>,
-        gestureResponseDistance:{vertical:Dimensions.get('window').height},
+        // gestureResponseDistance:{vertical:Dimensions.get('window').height},
       })
       }}/>
     </Stack.Navigator>
@@ -150,8 +154,21 @@ export const createRootNavigator = () => {
           const previousRouteName = routeNameRef.current;
           const currentRouteName = navigationRef.current.getCurrentRoute().name;
           if (previousRouteName !== currentRouteName) {
-            // await Analytics.setCurrentScreen(currentRouteName);
-            console.warn(currentRouteName)
+            runInAction(async () => {
+              analytics().logScreenView({
+                screen_name: currentRouteName,
+                screen_class: currentRouteName,
+              })
+              if(((new Date() - network.screenDate)/60000) < 60){
+                analytics().logEvent(`${previousRouteName}`,{
+                  value: (new Date() - network.screenDate)/1000,
+                  screenTime: (new Date() - network.screenDate)/1000
+                })
+                console.warn(previousRouteName,'screenTime:', (new Date() - network.screenDate)/1000)
+              }
+              network.screenDate = new Date()
+            })
+            // console.warn(currentRouteName)
           }
           routeNameRef.current = currentRouteName;
         }}

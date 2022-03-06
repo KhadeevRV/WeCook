@@ -1,7 +1,7 @@
 import React, { useEffect,useState } from 'react'
-import { StyleSheet, Text, View,SafeAreaView, Image, Platform, KeyboardAvoidingView, Alert } from 'react-native'
+import { StyleSheet, Text, View,SafeAreaView, Image, Platform, KeyboardAvoidingView, Alert, AsyncStorage } from 'react-native'
 import { TouchableOpacity, FlatList, ScrollView, TextInput } from 'react-native-gesture-handler'
-import network, { getCode, getList, sendAnswer } from '../../Utilites/Network'
+import network, { getCode, getFavors, getList, getMenu, getUserInfo, sendAnswer, updateInfo } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
 import { runInAction } from 'mobx'
 import {Btn} from '../components/Btn'
@@ -24,7 +24,6 @@ const LoginScreen = observer(({navigation,route}) => {
         }
         setPhone(newPhone)
     }
-    const screen = network.onboarding['LoginScreen']
 
     const sendPhone = async() => {
         const clearPhone = phone.replace(/[^\d.-]/g, '')
@@ -39,9 +38,40 @@ const LoginScreen = observer(({navigation,route}) => {
         }
     }
 
+    const sendPhoneWithoutCode = async () => {
+        const clearPhone = phone.replace(/[^\d.-]/g, '')
+        setloading(true)
+        try {
+            const token = await updateInfo('phone',clearPhone)
+            if(token){
+                runInAction(async () => {
+                    AsyncStorage.setItem('token',token)
+                    network.access_token = token
+                    await getUserInfo(token)
+                    await getMenu()
+                    await getFavors()
+                    setloading(false)
+                    navigation.navigate(from ? from : exit ? 'ReceptDayScreen' : 'MainStack')
+                })
+            } else {
+                runInAction(async () => {
+                    network.user.phone = clearPhone
+                    await getUserInfo()
+                    setloading(false)
+                    navigation.navigate(from ? from : exit ? 'ReceptDayScreen' : 'MainStack')
+                })
+            }
+        } catch (err) {
+            setloading(false)
+            console.warn(err)
+            Alert.alert('Ошибка',err)
+        }
+    }
+
     const exit = route?.params?.exit
     const closeDisable = route?.params?.closeDisable
     const from = route?.params?.from
+    const screen = network.onboarding['LoginScreen']
 
     useEffect(() => {
         if(!!closeDisable){
@@ -63,7 +93,7 @@ const LoginScreen = observer(({navigation,route}) => {
             withBack={!!from}
             closeDisable={!!closeDisable} 
             title={'Вход'} 
-            withSkip={!!!from} 
+            withSkip={!from && screen?.continue_step} 
             goBack={() => navigation.goBack()}
         />
         <ScrollView style={{backgroundColor:'#FFF'}} contentContainerStyle={{paddingTop:8}}>
@@ -84,8 +114,8 @@ const LoginScreen = observer(({navigation,route}) => {
         <View style={{paddingHorizontal:8,paddingTop:13,paddingBottom:8,justifyContent:'flex-end',backgroundColor:'#FFF'}}>
                 <Btn 
                     title={'Продолжить'} 
-                    // title={'Получить код'} 
-                    onPress={() => sendPhone()}
+                    // onPress={() => sendPhone()}
+                    onPress={() => sendPhoneWithoutCode()}
                     customStyle={{borderRadius:16}} 
                     customTextStyle={{fontWeight:'600',fontSize:16,lineHeight:19}}
                     backgroundColor={Colors.yellow} underlayColor={Colors.underLayYellow} disabled={phone.length < 2} />

@@ -29,7 +29,7 @@ const FirstQuizScreen = observer(({navigation,route}) => {
 
     const answerHandler = (item) => {
         sendAnswer(screen?.request_to,'FirstQuizScreen',item?.text)
-        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+        if(screen?.next_board == 'LoginScreen' && !!network.user?.phone){
             navigation.navigate('MainStack')
         } else {
             navigation.navigate(screen?.next_board)
@@ -37,7 +37,7 @@ const FirstQuizScreen = observer(({navigation,route}) => {
     }
 
     const skipQuest = () => {
-        if(screen?.next_board == 'LoginScreen' && network.user?.phone){
+        if(screen?.next_board == 'LoginScreen' && !!network.user?.phone){
             navigation.navigate('MainStack')
         } else {
             navigation.navigate(screen?.next_board)
@@ -51,7 +51,7 @@ const FirstQuizScreen = observer(({navigation,route}) => {
     return (
         <>
         <SafeAreaView backgroundColor={'#FFF'} />
-        <SkipHeader skip={() => skipQuest()} goBack={() => navigation.goBack()} />
+        <SkipHeader skip={() => skipQuest()} goBack={() => navigation.goBack()} withSkip={screen?.continue_step} />
         <Animated.View style={{opacity:fadeAnim,flex:1,backgroundColor:'#FFF',transform:[{translateY:marginAnim}]}}>
         <FlatList
             showsVerticalScrollIndicator={false}

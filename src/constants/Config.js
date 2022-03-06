@@ -1,5 +1,6 @@
 const Config = {
     apiDomain:              'https://wecook.app/api/',
+    url:                    'https://wecook.app',
     version:                '1.0',
     appName:                'WeCook',
     urlTile:                'http://tile.stamen.com/terrain/{z}/{x}/{y}.jpg',

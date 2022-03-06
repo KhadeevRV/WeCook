@@ -1,5 +1,5 @@
 import React, { Component,useState, useRef, useEffect } from 'react'
-import { StyleSheet, Text, View, Image, Platform, KeyboardAvoidingView, ImageBackground, Dimensions, SafeAreaView, BackHandler, StatusBar, Animated, InteractionManager } from 'react-native'
+import { StyleSheet, Text, View, Image, Platform, KeyboardAvoidingView, ImageBackground, Dimensions, SafeAreaView, BackHandler, StatusBar, Animated, InteractionManager, Alert } from 'react-native'
 import { TouchableOpacity, FlatList, ScrollView, TextInput, TouchableHighlight } from 'react-native-gesture-handler'
 import network, { getList, getUserInfo } from '../../Utilites/Network'
 import { observer,Observer, useObserver } from 'mobx-react-lite'
@@ -16,6 +16,9 @@ import { StoriesModal } from '../components/MenuScreen/StoriesModal'
 import Spinner from 'react-native-loading-spinner-overlay'
 import FastImage from 'react-native-fast-image'
 import BottomListBtn from '../components/BottomListBtn'
+import Config from '../constants/Config'
+import { useFocusEffect } from '@react-navigation/native'
+import changeNavigationBarColor from 'react-native-navigation-bar-color'
 // import Animated from 'react-native-reanimated'
 // import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -29,7 +32,7 @@ const ChangeMenuBtn = ({visible,onPress,title}) => {
             <TouchableHighlight 
                 onPress={() => onPress()}
                 underlayColor={'#EEEEEE'} 
-                style={{paddingVertical:7,paddingHorizontal:24,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
+                style={{paddingVertical:10.5,paddingHorizontal:24,backgroundColor:'#F5F5F5',borderRadius:18,flexWrap:'wrap'}}>
                 <Text style={styles.addsTitle}>{title}</Text>
             </TouchableHighlight>
         </View>
@@ -63,19 +66,36 @@ const MenuScreen = observer(({navigation}) => {
         }
     }
 
+    const backAction = () => {
+        Alert.alert(Config.appName, 'Вы действительно хотите выйти?', [
+            {
+              text: 'Нет',
+              onPress: () => null,
+              style: 'cancel',
+            },
+            {text: 'Да', onPress: () => BackHandler.exitApp()},
+        ]);
+    }
+
+
+
     const header = [
         <View style={styles.header} key={'menuHeader'}>
             <TouchableOpacity activeOpacity={1} style={{paddingHorizontal:16,paddingVertical:11}}
                 onPress={() => goToProfile()}
             >
+                {network.user?.access ? null : 
+                <View style={{width:10,height:10,borderRadius:10,backgroundColor:'#FFF',position:'absolute',top:11,right:14,justifyContent:'center',alignItems:'center',zIndex:100}}>
+                    <View style={{width:6,height:6,borderRadius:3,backgroundColor:Colors.yellow}} />
+                </View>}
                 <Image source={require('../../assets/icons/profile.png')} style={{width:20,height:22}} />
             </TouchableOpacity>
             <View style={{alignItems:'center'}}>
-                <TouchableOpacity activeOpacity={1} onPress={() => setWeeksModal(true)} style={{flexDirection:'row',alignItems:'center'}}>
+                <TouchableOpacity activeOpacity={1} onPress={() => setWeeksModal(true)} style={{flexDirection:'row',alignItems:'center',paddingVertical:5,}}>
                     <Text style={styles.headerTitle}>{currentWeek} неделя</Text>
-                    <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,marginLeft:6,bottom:4}} />
+                    <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,marginLeft:6}} />
                 </TouchableOpacity>
-                <Text style={styles.headerSubitle}>{network.user?.persons} персоны</Text>
+                {/* <Text style={styles.headerSubitle}>{network.user?.persons} персоны</Text> */}
             </View>
             <TouchableOpacity activeOpacity={1} style={{paddingHorizontal:16,paddingVertical:11}} 
                 onPress={() => navigation.navigate('FavoriteScreen')}
@@ -83,7 +103,7 @@ const MenuScreen = observer(({navigation}) => {
                 <Image source={require('../../assets/icons/heart.png')} style={{width:20.5,height:19}} />
                 {network.favorDishes.findIndex((dish) => dish.new) != -1 ?
                 <View style={{width:10,height:10,borderRadius:10,backgroundColor:'#FFF',position:'absolute',top:8,right:12,justifyContent:'center',alignItems:'center'}}>
-                    <View style={{width:6,height:6,borderRadius:3,backgroundColor:'#FF0000'}} />
+                    <View style={{width:6,height:6,borderRadius:3,backgroundColor:Colors.yellow}} />
                 </View> : null}
             </TouchableOpacity>
         </View>
@@ -94,7 +114,7 @@ const MenuScreen = observer(({navigation}) => {
             const recept = currentWeek == 'Текущая' ? network.allDishes.find((item) => item.id == rec.id) : network.oldMenu.find((item) => item.id == rec.id)
             navigation.navigate('ReceptScreen',{rec:recept})
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
 
@@ -105,7 +125,7 @@ const MenuScreen = observer(({navigation}) => {
         } else if (network.canOpenRec(recept.id)) {
             network.addToList(recept)
         } else {
-            navigation.navigate('PayWallScreen')
+            navigation.navigate('PayWallScreen',{data:network.paywalls[network.user?.banner?.type]})
         }
     }
 
@@ -127,6 +147,18 @@ const MenuScreen = observer(({navigation}) => {
     }
 
     //! Баннеры
+
+    const getStickyHeader = () => {
+        const canShowFirstBanner = Object.keys(network.banner1).length && network.user?.banner_hide.findIndex(item => item == network.banner1?.type) == -1
+        const canShowSecondBanner = Object.keys(network.banner2).length && network.user?.banner_hide.findIndex(item => item == network.banner2?.type) == -1
+        if(canShowFirstBanner && canShowSecondBanner){
+            return 6
+        } else if (canShowFirstBanner || canShowSecondBanner){
+            return 5
+        } else {
+            return 4
+        }
+    }
     
     const bannerHandler = (banner) => {
         if(banner.type == 'list_history'){
@@ -319,7 +351,7 @@ const MenuScreen = observer(({navigation}) => {
              backgroundColor:'#FFF',marginRight:9,justifyContent:'flex-end',borderRadius:16,
              paddingHorizontal:6,paddingBottom:9}} borderRadius={16}>
                {network.stories[i].viewed ? null :
-               <View style={{width:14,height:14,backgroundColor:'#FFF',borderRadius:7,position:'absolute',right:0,top:0,
+               <View style={{width:14,height:14,backgroundColor:'#FFF',borderRadius:7,position:'absolute',right:1,top:1,
                     justifyContent:'center',alignItems:'center'}}>
                    <View style={{width:8,height:8,borderRadius:4,backgroundColor:Colors.yellow}} />
                 </View> 
@@ -343,6 +375,20 @@ const MenuScreen = observer(({navigation}) => {
         return onFocus;
     }, [navigation]);
 
+    useFocusEffect(
+        React.useCallback(() => {
+          const onBackPress = () => {
+            backAction()
+            return true;
+          };
+    
+          BackHandler.addEventListener('hardwareBackPress', onBackPress);
+          changeNavigationBarColor('#F5F5F5',true);
+          return () =>
+            BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+        }, []),
+    );
+      
     return (
         <>
         <View style={{backgroundColor:'#FFF',flex:1}}>
@@ -350,14 +396,17 @@ const MenuScreen = observer(({navigation}) => {
             <SafeAreaView style={{backgroundColor:'#FFF',height:getStatusBarHeight()}} /> : 
             <SafeAreaView style={{backgroundColor:'#FFF'}} />}
             {header}
-            <ScrollView
-                showsVerticalScrollIndicator={false} style={{flex:1}}
-                contentContainerStyle={{paddingBottom:30}} stickyHeaderIndices={[6]}
+            <ScrollView 
+                showsVerticalScrollIndicator={false} style={{flex:1}} 
+                scrollEventThrottle={16}
+                contentContainerStyle={{paddingBottom:30}} 
+                stickyHeaderIndices={[getStickyHeader()]}
                 ref={mainScroll}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingLeft:16,
                     marginTop:16,paddingRight:7}}>
                     {storiesBody}
                 </ScrollView>
+                {Object.keys(network.banner1).length && network.user?.banner_hide.findIndex(item => item == network.banner1?.type) == -1 ? 
                 <TouchableOpacity style={{marginTop:20}} activeOpacity={1} 
                     onPress={() => bannerHandler(network.banner1)}>
                 <ImageBackground 
@@ -367,15 +416,18 @@ const MenuScreen = observer(({navigation}) => {
                 >
                     <Text style={styles.addsTitle}>{network.banner1?.title_on_btn}</Text>
                 </ImageBackground>
-                </TouchableOpacity>
-                <View style={{marginTop:38,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingLeft:16}}>
+                </TouchableOpacity> : null}
+                <View style={{marginTop:38,flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16}}>
                     <Text style={styles.subtitle}>Рецепты дня</Text>
-                    <TouchableOpacity style={{paddingHorizontal:16,height:26,justifyContent:'center'}}
-                        onPress={() => navigation.navigate('SecondReceptDayScreen')}>
-                        <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,transform:[{rotate:'-90deg'}]}} />
-                    </TouchableOpacity>
+                    <TouchableHighlight underlayColor={'#EEEEEE'} style={{borderRadius:16,backgroundColor:'#F5F5F5'}}
+                        onPress={() => navigation.navigate('SecondReceptDayScreen',{from:'menu'})}>
+                        <View style={styles.receptDaysBtn}>
+                        <Text style={[styles.timeText,{marginBottom:0,marginRight:4}]} allowFontScaling={false}>Открыть</Text>
+                        <Image source={require('../../assets/icons/goDown.png')} style={{width:13,height:8,marginTop:5,transform:[{rotate:'-90deg'}]}} />
+                        </View>
+                    </TouchableHighlight>
                 </View>
-                <FlatList 
+                <FlatList
                     showsHorizontalScrollIndicator={false} horizontal
                     contentContainerStyle={{paddingLeft:16,paddingBottom:32,paddingTop:16,paddingRight:6}}
                     data={network.dayDishes}
@@ -391,7 +443,7 @@ const MenuScreen = observer(({navigation}) => {
                     renderItem={({item,index}) => <DayRecipeCard recept={item} onPress={() => openRec(item)} 
                         listHandler={(isInList,recept) => listHandler(isInList,recept)} key={item.id}/> }
                 />
-                {Object.keys(network.banner2).length ? 
+                {Object.keys(network.banner2).length && network.user?.banner_hide.findIndex(item => item == network.banner2?.type) == -1  ? 
                 <TouchableOpacity activeOpacity={1} onPress={() => bannerHandler(network.banner2)}>
                 <ImageBackground 
                         source={{uri:network.banner2?.image_btn?.big_webp}}
@@ -406,6 +458,11 @@ const MenuScreen = observer(({navigation}) => {
                     <TouchableOpacity style={{paddingHorizontal:16,height:26,justifyContent:'center'}} 
                         activeOpacity={1}
                         onPress={() => setFilterModal(true)}>
+                        {currentFilters.length == 0 || currentFilters.length == 5 ? null :
+                        <View style={{width:10,height:10,borderRadius:10,backgroundColor:'#FFF',position:'absolute',top:3,right:11,justifyContent:'center',alignItems:'center',zIndex:10}}>
+                            <View style={{width:6,height:6,borderRadius:3,backgroundColor:Colors.yellow,position:'absolute',}} />
+                        </View>
+                        }
                         <Image source={require('../../assets/icons/filter.png')} style={{width:20,height:19,top:1}} />
                     </TouchableOpacity>
                 </View>
@@ -481,16 +538,17 @@ export default MenuScreen
 
 const styles = StyleSheet.create({
     header:{
-        height:44,
+        height:Platform.select({ios:44, android:80 - StatusBar.currentHeight}),
         alignItems:'center',
-        flexDirection:'row',justifyContent:'space-between',
+        flexDirection:'row',
+        justifyContent:'space-between',
         backgroundColor:'#FFF',
     },
     headerTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:16,
         lineHeight:19,fontWeight:Platform.select({ ios: '800', android: 'bold' }),
         color:Colors.textColor,
-        bottom:4,
+        // bottom:4,
     },
     headerSubitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
@@ -499,6 +557,7 @@ const styles = StyleSheet.create({
     },
     addsTitle:{
         fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
+        fontWeight:'500',
         lineHeight:19,
         color:Colors.textColor
     },
@@ -521,5 +580,15 @@ const styles = StyleSheet.create({
     normalDots:{
         height:8,
         borderRadius:4
+    },
+    receptDaysBtn:{
+        paddingHorizontal:11,
+        paddingVertical:6,
+        justifyContent:'center',
+        flexDirection:'row',
+        // alignItems:"center",
+        flexWrap:'wrap',
+        
+        borderRadius:16,
     },
 })

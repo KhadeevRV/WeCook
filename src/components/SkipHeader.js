@@ -23,16 +23,17 @@ const SkipHeader = ({title='',withBack=true,goBack=() => null,skip=() => null,wi
     <View style={{alignItems:'center',flexDirection:'row',justifyContent:'space-between',paddingBottom:13,paddingRight:16,paddingTop:7,backgroundColor:"#FFF"}}>
         {withBack && !closeDisable ? 
         <TouchableOpacity activeOpacity={1} onPress={() => goBack()} style={{paddingLeft:16,width:16 + common.getLengthByIPhone7(98)}}>
-            <Image style={{width:11,height:18}} source={require('../../assets/icons/goBack.png')} />
+          <Image style={{width:11,height:18}} source={require('../../assets/icons/goBack.png')} />
         </TouchableOpacity> : <View style={{width:16 + common.getLengthByIPhone7(98)}} />}
         {title.length ? <Text style={styles.title}>{title}</Text> : null}
         <Animated.View style={{opacity:fadeAnim}}>
+        {withSkip && !closeDisable ? 
         <Btn title={'Пропустить'} backgroundColor={'#F5F5F5'} underlayColor={'#EEEEEE'} 
             onPress={() => skip()}
             customTextStyle={{fontSize:14,lineHeight:17,fontWeight:'500'}}
             customStyle={{width:common.getLengthByIPhone7(98),borderRadius:14,
-              height:common.getLengthByIPhone7(28),opacity:withSkip && !closeDisable ? 1 : 0
-            }} />
+              height:common.getLengthByIPhone7(28)
+            }} /> : <View style={{width:common.getLengthByIPhone7(98)}} />}
         </Animated.View>
     </View>
     )

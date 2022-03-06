@@ -10,7 +10,7 @@ import Video from 'react-native-video'
 import LinearGradient from 'react-native-linear-gradient'
 // import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import Config from '../../constants/Config'
-import { getStatusBarHeight } from 'react-native-iphone-x-helper'
+import { getStatusBarHeight, isIphoneX } from 'react-native-iphone-x-helper'
 import FastImage from 'react-native-fast-image'
 import { runInAction } from 'mobx'
 
@@ -178,7 +178,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                 />
             </View>
             {/* <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]}> */}
-                <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight  : 0}} />
+                <SafeAreaView style={{marginBottom:isIphoneX() ? 0 : getStatusBarHeight()}} />
                 <View style={{height:120}}>
                     <View style={{flexDirection:'row',paddingHorizontal:10,position:'absolute',width:'100%',zIndex:10,marginTop:4}}>
                         {progressBar}
@@ -249,10 +249,10 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
             onLoad={() => {
                 setVideoLoad(true)
             }}>
-            {fullText ? <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight  : 0}} />  :
+            {fullText ? <SafeAreaView style={{marginBottom:isIphoneX() ? 0 : getStatusBarHeight()}} />  :
             <View>
             {/* <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]} style={{paddingTop:Platform.OS == 'android' ? 0 : getStatusBarHeight()}}> */}
-            <SafeAreaView style={{marginBottom:Platform.OS == 'android' ? StatusBar.currentHeight : 0}} /> 
+            <SafeAreaView style={{marginBottom:isIphoneX() ? 0 : getStatusBarHeight()}} /> 
                 <View style={{height:120}}>
                     <View style={{flexDirection:'row',paddingLeft:11,paddingRight:10,position:'absolute',width:'100%',zIndex:10,marginTop:4}}>
                         {progressBar}

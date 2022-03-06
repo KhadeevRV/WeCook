@@ -31,6 +31,8 @@ class Network {
     additionMenu = []
     history = []
     paywalls = {}
+    receptCount = 0
+    screenDate = new Date()
     
     getSectionsAndDayDishes(arr) {
         const newDays = []
@@ -67,18 +69,31 @@ class Network {
             this.history.unshift(historyDish)
         }
     }
+
     deleteFromList(dish){
         const newArr = this.listDishes.filter((item) => item.id != dish.id)
         this.listDishes = newArr
         listRemove(dish?.id)
     }
-    addToFavor(dish){
+
+    addToFavor(dish,navigation){
+        if(!this.user.access && this.favorDishes.length > 6){
+            return Alert.alert(Config.appName,'Вы достигли ограничения в 7 рецептов в разделе избранное. Вы можете открыть полный доступ или удалить другие рецепты из любимого.',[{
+                text:'Открыть полный доступ',
+                onPress:() => navigation.navigate('PayWallScreen',{data:this.paywalls[this.user?.banner?.type]})
+            },{
+                text:'Отменить',
+                style:'cancel'
+            }])
+        }
         let newDish = dish
-        newDish['new'] = true
         const newArr = [newDish,...this.favorDishes]
+        newDish['new'] = true
         this.favorDishes = newArr
+        newArr.length == 2 ? this.user['favorTrigger'] = true : null
         favorHandler(dish.id,'add')
     }
+
     deleteFromFavor(dish){
         const newArr = this.favorDishes.filter((item) => item.id != dish.id)
         this.favorDishes = newArr
@@ -86,7 +101,7 @@ class Network {
     }
 
     canOpenRec(id) {
-        if(this.dayDishes.filter(dish => dish.id == id).length || this.user?.access){
+        if(this.dayDishes.filter(dish => dish.id == id).length || this.user?.access || this.listDishes.filter(dish => dish.id == id).length || this.favorDishes.filter(dish => dish.id == id).length){
             return true
         } else {
             return false
@@ -110,6 +125,7 @@ class Network {
     }
 
     changeProfilePersons(persons){
+        this.user.persons = persons
         for (let i = 0; i < this.allDishes.length; i++) {
             this.allDishes[i].persons = persons
         }
@@ -124,25 +140,48 @@ class Network {
         }
     }
 
-    rateApp(){
-        if(InAppReview.isAvailable()){
-            InAppReview.RequestInAppReview().then((hasFlowFinishedSuccessfully) => {
-                // when return true in android it means user finished or close review flow
-                console.log('InAppReview in android', hasFlowFinishedSuccessfully);
-
-                // when return true in ios it means review flow lanuched to user.
-                console.log(
-                'InAppReview in ios has launched successfully',
-                hasFlowFinishedSuccessfully,
-                );
-                if (hasFlowFinishedSuccessfully) {
-                // do something for ios
-                // do something for android
-                }
-            })
-            .catch((error) => {
-            console.log(error);
-            });
+    rateApp(what){
+        let trigger = false
+        if(what == 'recept'){
+            this.receptCount = this.receptCount + 1
+            this.receptCount == 5 || this.user?.favorTrigger ? trigger = true : null
+        }
+        let registerDate = new Date(this.user?.created_at)
+        let t2 = registerDate.getTime()
+        let t1 = new Date().getTime()
+        const days = parseInt((t1-t2)/(24*3600*1000))
+        if(days > 3 && trigger && this.user?.show_feedback_alert){
+            setTimeout(() => {                
+                Alert.alert(Config.appName,'Нравится приложение?',[{
+                    text:'Да',
+                    onPress: () => {
+                        let options = {
+                            AppleAppID:"1577136146",
+                            GooglePackageName:"app.wecook",
+                            OtherAndroidURL:"http://www.randomappstore.com/app/47172391",
+                            preferredAndroidMarket: AndroidMarket.Google,
+                            preferInApp:false,
+                            openAppStoreIfInAppFails:true,
+                            fallbackPlatformURL:"http://www.mywebsite.com/myapp.html",
+                        }
+                    Rate.rate(options, (success)=>{
+                        if (success) {
+                            fetch(Config.apiDomain + `user/alerts/feedback/off`,{
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization':'Bearer ' + network.access_token,
+                                },
+                            })
+                            console.warn('disableAlert()')
+                            this.user.show_feedback_alert = false
+                        }
+                    })
+                    }},{
+                    text:'Нет',
+                    style:'cancel'
+                }])
+            }, 1500);
         }
     }
    
@@ -171,7 +210,7 @@ export function authUser() {
         })
         .then(response =>{
         response.json().then(data => {
-            console.warn('authUser: ' + JSON.stringify(data));
+            console.warn('authUser: ' + network.deviceId + JSON.stringify(data));
             if (data.token) {
                 AsyncStorage.setItem('token',data.token)
                 mobx.runInAction(() => {
@@ -208,8 +247,8 @@ export function getMenu() {
             console.warn('getMenu: ' + JSON.stringify(data));
             if (data.status == 'ok') {
                 mobx.runInAction(() => {
-                    network.access_token = data.user.token
-                    network.user = data.user
+                    // network.access_token = data.user.token
+                    // network.user = data.user
                     network.allDishes = data.menu
                     network.listDishes = data?.list
                     network.oldMenu = data?.menu_old
@@ -252,15 +291,10 @@ export function getScreens() {
             response.json().then(data => {
             console.warn('getScreens: ' + JSON.stringify(data));
             if (data) {
-                const newItems = []
-                for (let i = 0; i < data['PayWallScreen']?.plans.length; i++) {
-                    const id = data['PayWallScreen']?.plans[i].id
-                    newItems.push(id)
-                }
                 mobx.runInAction(() => {
                     network.onboarding = data
                 })
-                resolve(newItems) 
+                resolve() 
             }
             else {     
                 reject(data.error)
@@ -526,9 +560,11 @@ export function updateInfo(what,value) {
             console.warn('updateInfo: ' + JSON.stringify(data));
             if (data?.status != 'error') {
                 resolve() 
-            }else if(data?.token && what == 'phone'){
-                resolve(data.token)
-            } else {     
+            }
+            // else if(data?.token && what == 'phone'){
+            //     resolve(data.token)
+            // } 
+            else {     
                 reject(data.message)
             }
         }).catch(err =>{
@@ -844,6 +880,36 @@ export function iSeeYourDaddy(id) {
         })
         .catch(err =>{
         console.warn(err); 
+        reject('Unknown error.Try again later.');
+        })
+    })
+}
+
+export function getShortLink(link) {
+    console.warn('oldLink',link)
+    return new Promise(function(resolve,reject){
+        fetch(Config.apiDomain + `generate-short-link`,{
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization':'Bearer ' + network.access_token
+        },
+        body:JSON.stringify({link})
+        })
+        .then(response =>{
+            response.json().then(data => {
+            console.warn('getShortLink: ' + JSON.stringify(data));
+            if (data.status == 'ok') {
+                resolve(data.link) 
+            }
+            else {     
+                reject(data.message)
+            }
+        })
+        })
+        .catch(err =>{
+        console.warn(err);
         reject('Unknown error.Try again later.');
         })
     })

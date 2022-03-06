@@ -12,6 +12,9 @@ import { Btn } from '../components/Btn'
 import * as RNIap from 'react-native-iap'
 import Config from '../constants/Config'
 import Spinner from 'react-native-loading-spinner-overlay'
+import { AppEventsLogger } from 'react-native-fbsdk-next'
+import { PrivacyModal } from '../components/ProfileScreen/PrivacyModal'
+import { FooterItem } from './ProfileScreen'
 
 const PayWallScreen = observer(({navigation,route}) => {
 
@@ -19,14 +22,19 @@ const PayWallScreen = observer(({navigation,route}) => {
     const [loading, setLoading] = useState(false)
     const fromOnboarding = route?.params?.fromOnboarding
     const data = route.params?.data
+    const [textMode, setTextMode] = useState('privacy')
+    const [privacyModal, setprivacyModal] = useState(false)
     
     const screen = data ?? network.onboarding['PayWallScreen']
-
+    // console.warn(screen?.plans)
     const plansView = []
     for (let i = 0; i < screen?.plans.length; i++) {
         const plan = screen?.plans[i];
         plansView.push(
-            <PayWallItem plan={plan} pressed={currentPlan == i} onPress={() => setCurrentPlan(i)} key={plan.id}/>
+            <PayWallItem plan={plan} pressed={currentPlan == i} onPress={() => {
+                setCurrentPlan(i)
+                payHandler(plan)
+            }} key={plan.id}/>
         )
     }
 
@@ -42,14 +50,20 @@ const PayWallScreen = observer(({navigation,route}) => {
         )
     }
 
-    const payHandler = () => {
+    const payHandler = (plan) => {
+        const newPlan = plan ?? screen?.plans[currentPlan]
         // Покупка подписки
-        RNIap.requestPurchase(screen?.plans[currentPlan].id, false)
+        console.warn('newPlan.i',newPlan.id)
+        setLoading(true)
+        RNIap.requestPurchase(newPlan.id)
         .then((receipt) => {
-            setLoading(true)
             // Отправляем id на сервер
             payAppleOrAndroid(receipt).then(async () => {
                 console.warn('receipt',receipt)
+                let today = new Date()
+                let inWeek = new Date()
+                inWeek.setDate(today.getDate() + 7)
+                newPlan.trial ? AppEventsLogger.logEvent('TrialBuy',{ 'TrialStart': today.toLocaleDateString('ru'), 'TrialEnd' : inWeek.toLocaleDateString('ru')}) : AppEventsLogger.logEvent('fb_mobile_purchase',{fb_currency:'RUB',receipt_id:newPlan.id})
                 // Обновление инфы о пользователе
                 try {
                     await getUserInfo()
@@ -64,9 +78,6 @@ const PayWallScreen = observer(({navigation,route}) => {
                         // from - экран, на который перейдет пользователь после подтверждения телефона
                         network.user?.phone ? navigation.navigate(screen?.next_board) : navigation.navigate('LoginScreen',{closeDisable:true,from:screen?.next_board})
                     }
-                    setTimeout(() => {
-                        Alert.alert(Config.appName,'Подписка куплена. Поздравляем!')
-                    }, 1500);
                 } catch (error) {
                     console.warn(error)
                     setLoading(false)
@@ -85,12 +96,41 @@ const PayWallScreen = observer(({navigation,route}) => {
         });
     }
 
+    const footerArr = [
+        {
+            id:1,
+            title:'Политика конфиденциальности',
+            onPress: () => {
+                setTextMode('privacy')
+                setprivacyModal(true)
+            },
+        },{
+            id:2,
+            title:'Пользовательское соглашение',
+            onPress: () => {
+                setTextMode('agreement')
+                setprivacyModal(true)
+            },
+        },{
+            id:3,
+            title:'User agreement',
+            onPress: () => {
+                setTextMode('UserAgreement')
+                setprivacyModal(true)
+            },
+        }
+    ]
+
 
     return (
         <>
         <SafeAreaView backgroundColor={"#FFF"} />
         <Spinner visible={loading} />
-        <SkipHeader skip={() => fromOnboarding ? navigation.navigate(screen?.next_board) : navigation.goBack()} withBack={false} />
+        <SkipHeader 
+            skip={() => fromOnboarding ? navigation.navigate(screen?.next_board) : navigation.goBack()} 
+            withBack={false}
+            withSkip={data ? true : screen?.continue_step}    
+        />
         <ScrollView style={{flex:1,backgroundColor:'#FFF'}} contentContainerStyle={{paddingHorizontal:16,paddingTop:8}} showsVerticalScrollIndicator={false}>
             <Text style={styles.title}>{screen?.title}</Text>
                 {plansView}
@@ -99,6 +139,7 @@ const PayWallScreen = observer(({navigation,route}) => {
             </View>
         </ScrollView>
         <View style={{alignItems:'center',padding:8,backgroundColor:'#FFF'}}>
+            {footerArr.map((item) => <FooterItem title={item.title} onPress={item.onPress} key={item.id} />)}
             <Text style={styles.decr}>{screen?.description_bottom}</Text>
             <Btn underlayColor={Colors.underLayYellow} 
                 title={screen?.plans?.[currentPlan]?.button} backgroundColor={Colors.yellow} 
@@ -107,6 +148,7 @@ const PayWallScreen = observer(({navigation,route}) => {
                 onPress={() => payHandler()} />
         </View>
         <SafeAreaView backgroundColor={"#FFF"} />
+        <PrivacyModal modal={privacyModal} closeModal={() => setprivacyModal(false)} mode={textMode} />
         </>
     )
 })
