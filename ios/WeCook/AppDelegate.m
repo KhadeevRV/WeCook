@@ -4,6 +4,10 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTRootView.h>
 #import <Firebase.h>
+#import <YandexMapsMobile/YMKMapKitFactory.h>
+#import "RNSplashScreen.h"
+#import <GoogleMaps/GoogleMaps.h>
+#import <FBSDKCoreKit/FBSDKCoreKit-swift.h>
 
 #ifdef FB_SONARKIT_ENABLED
 #import <FlipperKit/FlipperClient.h>
@@ -28,7 +32,11 @@ static void InitializeFlipper(UIApplication *application) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  [[FBSDKApplicationDelegate sharedInstance] application:application
+                      didFinishLaunchingWithOptions:launchOptions];
+  [GMSServices provideAPIKey:@"AIzaSyBckD6xwkxL5GDA8fXrlFCW74xxoBRYWRw"];
   [FIRApp configure];
+  [YMKMapKit setApiKey: @"31460ec9-f312-465d-a25a-e3017559ad4f"];
 #ifdef FB_SONARKIT_ENABLED
   InitializeFlipper(application);
 #endif
@@ -38,18 +46,18 @@ static void InitializeFlipper(UIApplication *application) {
                                                    moduleName:@"WeCook"
                                             initialProperties:nil];
 
-  if (@available(iOS 13.0, *)) {
-      rootView.backgroundColor = [UIColor systemBackgroundColor];
-  } else {
-      rootView.backgroundColor = [UIColor whiteColor];
-  }
+//  if (@available(iOS 13.0, *)) {
+//      rootView.backgroundColor = [UIColor systemBackgroundColor];
+//  } else {
+//      rootView.backgroundColor = [UIColor whiteColor];
+//  }
 
   self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
   UIViewController *rootViewController = [UIViewController new];
   rootViewController.view = rootView;
   self.window.rootViewController = rootViewController;
   [self.window makeKeyAndVisible];
-  
+  [RNSplashScreen show];
   return YES;
 }
 

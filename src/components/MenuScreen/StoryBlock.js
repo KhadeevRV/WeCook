@@ -6,7 +6,7 @@ import network, { addToMenu, replaceMenu, iSeeYourDaddy } from '../../../Utilite
 import { observer } from 'mobx-react-lite'
 import {ShowDishesModal} from './ShowDishesModal'
 import { BlurView } from '@react-native-community/blur'
-import Video from 'react-native-video'
+// import Video from 'react-native-video'
 import LinearGradient from 'react-native-linear-gradient'
 // import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
 import Config from '../../constants/Config'
@@ -153,7 +153,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                     backgroundColor:'#000',
                     zIndex:-1,
                 }}>
-            <Video source={{uri: stories[currentStory].video}}   // Can be a URL or a local file.
+            {/* <Video source={{uri: stories[currentStory].video}}   // Can be a URL or a local file.
                 ref={videoRef}                                      // Store reference
                 onError={(e) => Alert.alert(Config.appName, 'Ошибка при загрузке видео',[{
                     text:'OK', onPress: () => closeModal()
@@ -175,7 +175,7 @@ export const StoryBlock = observer(({closeModal = null,stories,stop,setStop,curr
                 style={styles.backgroundVideo}
                 // repeat={stop}
                 paused={stop} 
-                />
+                /> */}
             </View>
             {/* <LinearGradient colors={['rgba(0, 0, 0, 0.4)', `rgba(0, 0, 0, 0)`]}> */}
                 <SafeAreaView style={{marginBottom:isIphoneX() ? 0 : getStatusBarHeight()}} />

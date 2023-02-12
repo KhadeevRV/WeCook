@@ -1,62 +1,311 @@
-import { observer } from 'mobx-react-lite'
-import React from 'react'
-import { Image, Platform, StyleSheet, Text, View } from 'react-native'
-import { TouchableHighlight } from 'react-native-gesture-handler'
-import { getBottomSpace } from 'react-native-iphone-x-helper'
-import common from '../../Utilites/Common'
-import network from '../../Utilites/Network'
-import Colors from '../constants/Colors'
+import {observer} from 'mobx-react-lite';
+import React from 'react';
+import {
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+} from 'react-native';
+import {TouchableHighlight} from 'react-native-gesture-handler';
+import {getBottomSpace} from 'react-native-iphone-x-helper';
+import common from '../../Utilites/Common';
+import network from '../../Utilites/Network';
+import Colors from '../constants/Colors';
+import {strings} from '../../assets/localization/localization';
 
-const BottomListBtn = observer(({navigation}) => {
-    return (
-        <View style={{padding:8,backgroundColor:"#FFF",paddingBottom:getBottomSpace() + 8}}>
-            <TouchableHighlight onPress={() => navigation.navigate('ListScreen')}
-                style={{width:'100%',padding:17,backgroundColor:Colors.yellow,borderRadius:16}} 
-                underlayColor={Colors.underLayYellow}>
-                {/* <View style={{width:'100%',borderRadius:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}} > */}
-                <View style={{flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
-                <View style={{
-                    paddingHorizontal: 4,
-                    paddingTop:2,paddingBottom:3,
-                    borderRadius:20,
-                    backgroundColor:Colors.textColor,marginRight:7,
-                    minWidth:24,
-                    alignItems:'center',
+const BottomListBtn = observer(
+  ({
+    navigation,
+    fromBasket = false,
+    containerStyle = {},
+    isLoading = false,
+    onPress,
+    title,
+  }) => {
+    const getPercent = (val1, val2) => {
+      if (val1 && val2) {
+        return (val1 / val2) * 100 > 100 ? 100 : (val1 / val2) * 100;
+      }
+      return 0;
+    };
+    const isMin =
+      getPercent(
+        network.basketInfo?.summa_in_cart,
+        network.basketInfo?.delivery_free_min,
+      ) >
+      getPercent(
+        network.basketInfo?.order_min,
+        network.basketInfo?.delivery_free_min,
+      );
+
+    const isFree =
+      getPercent(
+        network.basketInfo?.summa_in_cart,
+        network.basketInfo?.delivery_free_min,
+      ) == 100;
+
+    if (!network.isBasketUser()) {
+      return (
+        <View style={styles.container}>
+          <TouchableHighlight
+            onPress={() => navigation.navigate('ListScreen')}
+            style={{
+              width: '100%',
+              padding: 17,
+              backgroundColor: Colors.yellow,
+              borderRadius: 16,
+            }}
+            underlayColor={Colors.underLayYellow}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <View
+                style={{
+                  paddingHorizontal: 4,
+                  paddingTop: 2,
+                  paddingBottom: 3,
+                  borderRadius: 20,
+                  backgroundColor: Colors.textColor,
+                  marginRight: 7,
+                  minWidth: 24,
+                  alignItems: 'center',
                 }}>
-                    <Text style={{...styles.headerSubitle,}}>{network.listDishes.length}</Text>
-                </View>
-                <Text style={styles.addsTitle}>
-                    {common.declOfNum(network.listDishes.length,['Рецепт','Рецепта','Рецептов'])} в Списке продуктов
+                <Text style={{...styles.listSubtitle}}>
+                  {network.listDishes.length}
                 </Text>
-                </View>
-                {/* <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <Image source={require('../../assets/icons/listMenu.png')} style={{width:23,height:21,marginRight:5}} />
-                    <Text style={styles.timeText}>от 2 ч.</Text>
-                </View> */}
-                {/* </View> */}
-            </TouchableHighlight>
+              </View>
+              <Text style={styles.addsTitle}>
+                {common.declOfNum(network.listDishes.length, [
+                  network?.strings?.Recipe,
+                  network?.strings?.Recipes,
+                  network?.strings?.Recipes2,
+                ])}{' '}
+                {network?.strings?.ButtonListTitle}
+              </Text>
+            </View>
+          </TouchableHighlight>
         </View>
-    )
-})
+      );
+    }
 
-export default BottomListBtn
+    return (
+      <View style={[styles.container, containerStyle]}>
+        <View
+          style={[
+            styles.line,
+            {width: '100%', backgroundColor: '#EEEEEE', marginBottom: 5},
+          ]}>
+          <View
+            style={[
+              styles.line,
+              {
+                width:
+                  getPercent(
+                    network.basketInfo?.summa_in_cart,
+                    network.basketInfo?.delivery_free_min,
+                  ) + '%',
+                backgroundColor: '#00C108',
+                position: 'absolute',
+                zIndex: 10,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.line,
+              {
+                width:
+                  getPercent(
+                    network.basketInfo?.order_min,
+                    network.basketInfo?.delivery_free_min,
+                  ) + '%',
+                backgroundColor: '#D3D3D3',
+                position: 'absolute',
+                zIndex: 5,
+              },
+            ]}
+          />
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            paddingBottom: 8,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text
+              style={[
+                styles?.orderSumText,
+                {color: isMin ? Colors.textColor : Colors.grayColor},
+              ]}>
+              {network.basketInfo?.order_min_text +
+                (isMin ? '' : network.basketInfo?.order_min_text_2)}
+            </Text>
+            {isMin ? (
+              <Image
+                source={require('../../assets/icons/complete.png')}
+                style={{width: 12, height: 9}}
+              />
+            ) : null}
+          </View>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text
+              style={[
+                styles?.orderSumText,
+                {color: isFree ? Colors.textColor : Colors.grayColor},
+              ]}>
+              {network.basketInfo?.delivery_free_min_text +
+                (isFree ? '' : network.basketInfo?.delivery_free_min_text_2)}
+            </Text>
+            {isFree ? (
+              <Image
+                source={require('../../assets/icons/complete.png')}
+                style={{width: 12, height: 9}}
+              />
+            ) : null}
+          </View>
+        </View>
+        <TouchableHighlight
+          onPress={() =>
+            onPress ? onPress() : navigation.navigate('BasketScreen')
+          }
+          style={styles.touchContainer}
+          disabled={isLoading || network.isLoadingBasket}
+          underlayColor={Colors.underLayYellow}>
+          {isLoading || network.isLoadingBasket ? (
+            <View>
+              <ActivityIndicator color={Colors.textColor} />
+            </View>
+          ) : (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Image
+                  source={
+                    fromBasket
+                      ? require('../../assets/icons/listMenu.png')
+                      : require('../../assets/icons/menu.png')
+                  }
+                  style={{width: 22, height: 20, marginRight: 7}}
+                />
+                {fromBasket ? (
+                  <Text style={styles.addsTitle}>
+                    {network?.basketInfo?.delivery_time}
+                  </Text>
+                ) : network?.basketInfo?.recipes ? (
+                  <Text style={styles.addsTitle}>
+                    {network?.basketInfo?.recipes.length + ' '}
+                    {common.declOfNum(network?.basketInfo?.recipes.length, [
+                      network.strings?.Meal,
+                      network.strings?.Meals,
+                      network.strings?.Meals2,
+                    ])}{' '}
+                  </Text>
+                ) : null}
+              </View>
+              <View style={styles.basketView}>
+                <Text style={styles.basketText}>
+                  {title
+                    ? title
+                    : fromBasket
+                    ? network.strings?.CheckoutButton
+                    : network.strings?.ShoppingCart}
+                </Text>
+              </View>
+              <Text style={styles.priceText}>
+                {network.basketInfo?.summa_in_cart}
+                {network.strings?.Currency}
+              </Text>
+            </View>
+          )}
+        </TouchableHighlight>
+      </View>
+    );
+  },
+);
+
+export default BottomListBtn;
 
 const styles = StyleSheet.create({
-    addsTitle:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:16,
-        lineHeight:19,
-        color:Colors.textColor
-    },
-    timeText:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }), fontSize:14,
-        fontWeight:'500',
-        lineHeight:17,
-        color:Colors.textColor
-    },
-    headerSubitle:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Regular' }), fontSize:12,
-        fontWeight:'bold',
-        color:'#FFF',
-        lineHeight:16,
-    },
-})
+  container: {
+    padding: 16,
+    paddingTop: 8,
+    backgroundColor: '#FFF',
+    paddingBottom: getBottomSpace() + 8,
+    borderTopWidth: 0.5,
+    borderColor: '#D3D3D3',
+  },
+  listSubtitle: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Regular',
+    }),
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FFF',
+    lineHeight: 16,
+  },
+  touchContainer: {
+    width: '100%',
+    padding: 17,
+    backgroundColor: Colors.yellow,
+    borderRadius: 16,
+  },
+  addsTitle: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Medium',
+    }),
+    fontSize: 16,
+    lineHeight: 19,
+    color: Colors.textColor,
+  },
+  basketView: {
+    position: 'absolute',
+    alignItems: 'center',
+    width: '100%',
+  },
+  basketText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Medium',
+    }),
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 19,
+    color: Colors.textColor,
+  },
+  priceText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Regular',
+    }),
+    fontSize: 14,
+    color: Colors.textColor,
+    lineHeight: 18,
+  },
+  orderSumText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Medium',
+    }),
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.textColor,
+    lineHeight: 14,
+  },
+  line: {
+    height: 6,
+    borderRadius: 3,
+  },
+});

@@ -1,13 +1,20 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-platform :ios, '10.0'
+platform :ios, '13.0'
 
 
 target 'WeCook' do
     permissions_path = '../node_modules/react-native-permissions/ios'
-
     pod 'Permission-AppTrackingTransparency', :path => "#{permissions_path}/AppTrackingTransparency"
+    pod 'Permission-LocationWhenInUse', :path => "#{permissions_path}/LocationWhenInUse"
+    pod 'Cloudpayments', :git =>  "https://github.com/cloudpayments/CloudPayments-SDK-iOS", :tag => '1.1.9'
+    pod 'CloudpaymentsNetworking', :git =>  "https://github.com/cloudpayments/CloudPayments-SDK-iOS", :tag => '1.1.9'
+    pod 'CardIO'
+    pod 'FBSDKCoreKit'
+    
+    rn_maps_path = '../node_modules/react-native-maps'
+    pod 'react-native-google-maps', :path => rn_maps_path
     
   config = use_native_modules!
 
@@ -20,6 +27,10 @@ target 'WeCook' do
   pod 'RNFastImage', :path => '../node_modules/react-native-fast-image'
 
   pod 'RNIap', :path => '../node_modules/react-native-iap'
+
+  pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
+
+  pod 'RNYamap', :path => '../node_modules/react-native-yamap'
 
   target 'WeCookTests' do
     inherit! :complete

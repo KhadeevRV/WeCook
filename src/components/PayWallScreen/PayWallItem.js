@@ -1,109 +1,180 @@
-import React,{useState} from 'react'
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform,} from 'react-native'
-import Colors from '../../constants/Colors'
-import { TouchableHighlight } from 'react-native-gesture-handler'
-import common from '../../../Utilites/Common'
-import DropShadow from 'react-native-drop-shadow'
-import LinearGradient from 'react-native-linear-gradient'
+import React, {useMemo, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import Colors from '../../constants/Colors';
+import {TouchableHighlight} from 'react-native-gesture-handler';
+import common from '../../../Utilites/Common';
+import DropShadow from 'react-native-drop-shadow';
+import LinearGradient from 'react-native-linear-gradient';
 
-const PayWallItem = ({plan,onPress=() => null,pressed}) => {
+const PayWallItem = ({plan, onPress = () => null, pressed}) => {
+  const [linewidth, setlinewidth] = useState(0);
 
-    const [linewidth, setlinewidth] = useState(0)
+  const checksView = useMemo(() => {
+    const body = [];
+    for (let i = 0; i < plan?.items?.length; i++) {
+      const item = plan?.items[i];
+      body.push(
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            paddingVertical: 5,
+            maxWidth: common.getLengthByIPhone7(290),
+          }}
+          key={item + i.toString()}>
+          <Image
+            source={require('../../../assets/icons/complete.png')}
+            style={{
+              width: 10,
+              height: 8,
+              marginRight: 9,
+              tintColor: '#00C108',
+              top: 6,
+            }}
+          />
+          <Text style={{...styles.checkText}}>{item}</Text>
+        </View>,
+      );
+    }
+    return body;
+  }, [plan?.items]);
 
   return (
-    <View style={{
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,marginBottom:16,
-    }}>
-    <View style={styles.card}>
-        <TouchableHighlight style={{...styles.container,backgroundColor:pressed ? Colors.underLayYellow : "#FFF"}} 
-            underlayColor={Colors.underLayYellow} onPress={() => onPress()}
-            >
-            <>
-            <Text style={styles.title}>{plan?.name}</Text>
-            <View style={{flexDirection:'row'}}>
-            {plan?.sale ? 
-            <>
-                <View
-                style={{
-                    position: 'absolute',
-                    transform: [ {rotate: '-15deg'} ],
-                    top: 7,
-                    left:-3,
-                    width:linewidth,
-                    height: 1,
-                    borderBottomColor: '#A157FF',
-                    borderBottomWidth: 1,
-                    borderRadius:Platform.OS == 'android' ? 0 : 1
-                }}/>
-                <Text style={styles.desc} onLayout={(e) => setlinewidth(5 + e.nativeEvent.layout.width)}>{plan?.old_price}</Text>
-                </> : null}
-                <Text style={styles.desc}> {plan?.desc}</Text>
+    <TouchableHighlight
+      style={{
+        ...styles.card,
+        backgroundColor: pressed ? '#FFF9D8' : '#F5F5F5',
+        borderColor: pressed ? Colors.yellow : '#F5F5F5',
+      }}
+      underlayColor={'#FFF9D8'}
+      onPress={() => onPress()}>
+      <>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          <Text style={styles.title}>{plan?.name}</Text>
+          <Text style={styles.priceText}>{plan?.price}</Text>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 4,
+          }}>
+          {plan?.sale ? (
+            <View style={styles.saleView}>
+              <Text style={styles.hitText}>{plan?.sale}</Text>
             </View>
-            {plan?.hit ? 
-                <LinearGradient style={styles.hitView} colors={['rgba(65,198,255, 1)', `rgba(41,255,165,1)`]} 
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 1 }}>
-                    <Text style={styles.hitText}>Популярно</Text>
-                </LinearGradient> 
-            : null}
-            {plan?.sale ? 
-                <View style={styles.saleView}>
-                    <Text style={styles.hitText}>{plan?.sale}</Text>
-                </View> 
-            : null}
-            </>
-        </TouchableHighlight>
-    </View>
-    </View>
-    )
-}
+          ) : (
+            <View />
+          )}
+          <Text style={[styles.desc]}>{plan?.desc}</Text>
+        </View>
+        {checksView}
+        <View
+          style={[
+            styles.point,
+            {backgroundColor: pressed ? Colors.underLayYellow : '#E9E6E6'},
+          ]}>
+          {pressed && (
+            <Image
+              source={require('../../../assets/icons/complete.png')}
+              style={{width: 10, height: 8}}
+            />
+          )}
+        </View>
+      </>
+    </TouchableHighlight>
+  );
+};
 
 const styles = StyleSheet.create({
-    container:{
-        borderRadius:16,borderWidth:4,borderColor:Colors.underLayYellow,
-        padding:8,alignItems:'center'
-    },
-    card:{
-        padding:8,width:'100%',backgroundColor:'#FFF',borderRadius:24,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,elevation:10
-    },
-    title:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay' }),
-        fontSize:16,lineHeight:19,
-        color:Colors.textColor,
-        fontWeight:Platform.select({ ios: '800', android: 'bold' }),
-    },
-    desc:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay-Medium' }),
-        fontSize:12,lineHeight:14,
-        fontWeight:'500',
-        color:Colors.textColor,
-    },
-    hitView:{
-        position:'absolute',top:8,right:8,paddingHorizontal:7,paddingVertical:2,
-        borderRadius:8,alignItems:'center',justifyContent:'center'
-    },
-    hitText:{
-        fontFamily:Platform.select({ ios: 'SF Pro Display', android: 'SFProDisplay' }),
-        fontSize:10,lineHeight:12,
-        color:'#FFF',
-    },
-    saleView:{
-        paddingVertical:4,paddingHorizontal:2,position:'absolute',top:8,left:8,
-        borderRadius:10,backgroundColor:'#A157FF'
-    }
-})
+  card: {
+    width: '100%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
+    borderWidth: 4,
+    padding: 12,
+    marginBottom: 8,
+    minHeight: 98,
+  },
+  title: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay',
+    }),
+    fontSize: 16,
+    lineHeight: 19,
+    color: Colors.textColor,
+    fontWeight: Platform.select({ios: '800', android: 'bold'}),
+  },
+  desc: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Medium',
+    }),
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: '500',
+    color: Colors.textColor,
+  },
+  hitText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay',
+    }),
+    fontSize: 12,
+    lineHeight: 14,
+    fontWeight: Platform.select({ios: '700', android: 'bold'}),
+    color: '#FFF',
+  },
+  saleView: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: '#00C108',
+  },
+  priceText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay',
+    }),
+    fontSize: 16,
+    lineHeight: 19,
+    fontWeight: Platform.select({ios: '800', android: 'bold'}),
+    color: Colors.textColor,
+  },
+  checkText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Medium',
+    }),
+    fontSize: 14,
+    lineHeight: 17,
+    fontWeight: '500',
+  },
+  point: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    position: 'absolute',
+    right: 12,
+    bottom: 8,
+  },
+});
 
-export default PayWallItem
+export default PayWallItem;
