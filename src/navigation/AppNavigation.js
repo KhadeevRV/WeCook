@@ -54,8 +54,8 @@ import SecondQuizScreen from '../screens/QuizScreens/SecondQuizScreen';
 import ThirdQuizScreen from '../screens/QuizScreens/ThirdQuizScreen';
 import PersonalizingScreen from '../screens/PersonalizingScreen';
 import EmailLoginScreen from '../screens/EmailScreens/EmailLoginScreen';
-import RecoverPassScreen from '../screens/EmailScreens/RecoverPassScreen';
-import { ModalManager } from '../services/ModalManager';
+import SendEmailCodeScreen from '../screens/EmailScreens/SendEmailCodeScreen';
+import {ModalManager} from '../services/ModalManager';
 
 const SlideFromBottom = {...TransitionPresets.ModalSlideFromBottomIOS};
 const SlideFromRight = {...TransitionPresets.SlideFromRightIOS};
@@ -104,10 +104,10 @@ const OnboardingStack = observer(() => {
         component={EmailLoginScreen}
       />
       <Stack.Screen
-        name="RecoverPassScreen"
+        name="SendEmailCodeScreen"
         options={{gestureEnabled: true, header: () => null}}
         initialParams={{fromOnboarding: true}}
-        component={RecoverPassScreen}
+        component={SendEmailCodeScreen}
       />
       <Stack.Screen
         name="FirstQuizScreen"
@@ -197,7 +197,7 @@ const MainStack = observer(() => {
           'PayScreen',
           'BasketScreen',
           'EmailLoginScreen',
-          'RecoverPassScreen',
+          'SendEmailCodeScreen',
         ];
         return {
           headerShown: false,
@@ -355,9 +355,9 @@ const MainStack = observer(() => {
         component={EmailLoginScreen}
       />
       <Stack.Screen
-        name="RecoverPassScreen"
+        name="SendEmailCodeScreen"
         options={{gestureEnabled: true, header: () => null}}
-        component={RecoverPassScreen}
+        component={SendEmailCodeScreen}
       />
       <Stack.Screen
         name="ReceptScreen"

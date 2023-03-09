@@ -19,7 +19,6 @@ import RecipeOfTheDay from '../components/ReceptDayScreen/RecipeOfTheDay';
 import common from '../../Utilites/Common';
 import {getStatusBarHeight} from 'react-native-iphone-x-helper';
 import LinearGradient from 'react-native-linear-gradient';
-import Animated from 'react-native-reanimated';
 import FlashMessage, {
   showMessage,
   hideMessage,

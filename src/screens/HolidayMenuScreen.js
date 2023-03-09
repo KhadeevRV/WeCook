@@ -34,7 +34,7 @@ import BottomListBtn from '../components/BottomListBtn';
 import Config from '../constants/Config';
 import Share from 'react-native-share';
 import {UnavailableProductsModal} from '../components/UnavailableProductsModal';
-import { SaleModal } from '../components/PayWallScreen/SaleModal';
+import {SaleModal} from '../components/PayWallScreen/SaleModal';
 
 const HolidayMenuScreen = observer(({navigation, route}) => {
   const headerHeight = 228 + getStatusBarHeight();

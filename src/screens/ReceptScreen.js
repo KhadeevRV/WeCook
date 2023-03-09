@@ -25,7 +25,6 @@ import common from '../../Utilites/Common';
 import BottomSheetBehavior from 'reanimated-bottom-sheet';
 import Colors from '../constants/Colors';
 import DropShadow from 'react-native-drop-shadow';
-import Animated from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import Share from 'react-native-share';
 import {BlurView} from '@react-native-community/blur';

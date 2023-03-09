@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import {ScrollView, TextInput} from 'react-native-gesture-handler';
-import network, {authUser, getScreens} from '../../../Utilites/Network';
+import network, {authUser, getScreens, loginEmail} from '../../../Utilites/Network';
 import {observer, Observer, useObserver} from 'mobx-react-lite';
 import {runInAction} from 'mobx';
 import {Btn} from '../../components/Btn';
@@ -23,11 +23,8 @@ import {TouchableOpacity} from '@gorhom/bottom-sheet';
 
 const EmailLoginScreen = observer(({navigation, route}) => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setloading] = useState(false);
   const [inputColor, setinputColor] = useState('#F5F5F5');
-  const [passInputColor, setPassInputColor] = useState('#F5F5F5');
-  const [hideInput, setHideInput] = useState(true);
   const fromOnboarding = route?.params?.fromOnboarding;
 
   const onNavigateNext = () => {
@@ -42,10 +39,12 @@ const EmailLoginScreen = observer(({navigation, route}) => {
   const login = async () => {
     try {
       setloading(true);
-      await authUser(email, password);
-      await getScreens();
+      // await authUser(email, password);
+      await loginEmail({email});
+      navigation.navigate('SendEmailCodeScreen', {email});
+      // await getScreens();
       setloading(false);
-      onNavigateNext();
+      // onNavigateNext();
     } catch (e) {
       setloading(false);
       Alert.alert(strings.Error, e);
@@ -85,31 +84,6 @@ const EmailLoginScreen = observer(({navigation, route}) => {
             keyboardType={'email-address'}
             onChangeText={setEmail}
           />
-          <View style={{justifyContent: 'center'}}>
-            <TextInput
-              style={[styles.input, {backgroundColor: passInputColor}]}
-              onFocus={() => setPassInputColor('#EEEEEE')}
-              onBlur={() => setPassInputColor('#F5F5F5')}
-              selectionColor={Colors.textColor}
-              placeholder={network.strings?.PasswordPlaceholder}
-              placeholderTextColor={Colors.grayColor}
-              secureTextEntry={hideInput}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity
-              onPress={() => setHideInput(prev => !prev)}
-              style={styles.iconContainer}>
-              <Image
-                source={
-                  hideInput
-                    ? require('../../../assets/icons/closedEye.png')
-                    : require('../../../assets/icons/openedEye.png')
-                }
-                style={styles.icon}
-              />
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
       <View
@@ -130,12 +104,12 @@ const EmailLoginScreen = observer(({navigation, route}) => {
           disabled={!common.validMail(email)}
           isLoading={loading}
         />
-        <Text
+        {/* <Text
           style={styles.descr}
           disabled={loading}
           onPress={() => navigation.navigate('RecoverPassScreen')}>
           {network.strings?.RemindPassword}
-        </Text>
+        </Text> */}
       </View>
       <SafeAreaView backgroundColor={'#FFF'} />
     </KeyboardAvoidingView>

@@ -179,6 +179,11 @@ export const SplashScreen = observer(({navigation}) => {
 
   const screenDelay = 24 * 60 * 60 * 1000;
   const checkReceptScreenDate = async () => {
+    const alreadySignIn = await AsyncStorage.getItem('alreadySignIn');
+    if (!alreadySignIn) {
+      AsyncStorage.setItem('alreadySignIn', 'Yes');
+      return;
+    }
     const receptDayDate = await AsyncStorage.getItem('receptDayDate');
     if (receptDayDate) {
       const date = new Date(receptDayDate);
