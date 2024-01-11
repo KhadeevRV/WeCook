@@ -104,7 +104,7 @@ export const SaleModal = observer(({modal, closeModal, navigation}) => {
                 height: 7,
                 width: textLayout?.width ? textLayout?.width + 5 : 0,
                 top: 10 + (textLayout?.y ?? 0),
-                tintColor: '#00C108',
+                tintColor: Colors.underLayYellow,
               }}
             />
             <Text allowFontScaling={false} style={styles.planPriceDesc}>
@@ -116,7 +116,7 @@ export const SaleModal = observer(({modal, closeModal, navigation}) => {
               width: 10,
               height: 18,
               transform: [{rotate: '180deg'}],
-              tintColor: '#00C108',
+              tintColor: Colors.underLayYellow,
             }}
             source={require('../../../assets/icons/goBack.png')}
           />
@@ -128,7 +128,7 @@ export const SaleModal = observer(({modal, closeModal, navigation}) => {
               allowFontScaling={false}
               style={[
                 styles.planPriceValue,
-                {marginVertical: 8, color: '#00C108',},
+                {marginVertical: 8, color: Colors.underLayYellow},
               ]}>
               {data?.price}
             </Text>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
       Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Regular',
     fontSize: 32,
     lineHeight: 38,
-    color: '#00C108',
+    color: Colors.underLayYellow,
     fontWeight: Platform.select({ios: '800', android: 'bold'}),
   },
   subtitle: {

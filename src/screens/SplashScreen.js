@@ -1,9 +1,8 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
-  AsyncStorage,
   Text,
   Animated,
-  Image,
+  StyleSheet,
   Platform,
   SafeAreaView,
   Alert,
@@ -14,7 +13,6 @@ import Common from '../../Utilites/Common';
 import {View} from 'react-native-animatable';
 import network, {
   getMenu,
-  getScreens,
   authUser,
   registerUser,
   getFavors,
@@ -29,6 +27,8 @@ import network, {
   getUserInfo,
   getUserFromLink,
   getModals,
+  getInitialScreens,
+  getRegisterScreens,
 } from '../../Utilites/Network';
 import {observer} from 'mobx-react-lite';
 import FastImage from 'react-native-fast-image';
@@ -54,6 +54,22 @@ import {
 } from 'react-native-iap';
 import {CheckDymanicLink} from './ReceptDayScreen';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
+import {useInterval} from './ReceptScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const updateAllData = async () => {
+  await Promise.all([
+    getTranslate(),
+    getInitialScreens(),
+    getMenu(),
+    getStores(),
+    getUserCards(),
+    getFavors(),
+    getModals(),
+    getList(),
+    getBasket(),
+  ]);
+};
 
 export const SplashScreen = observer(({navigation}) => {
   const initSubs = async items => {
@@ -68,27 +84,23 @@ export const SplashScreen = observer(({navigation}) => {
     } catch (error) {
       console.warn('err: ' + error);
     }
-    let purchaseUpdateSubscription = purchaseUpdatedListener(
-      async (purchase: InAppPurchase | SubscriptionPurchase) => {
-        const receipt = purchase.transactionReceipt;
-        console.warn('purchase', purchase);
-        if (receipt) {
-          RNIap.finishTransaction(receipt);
-        }
-      },
-    );
-    let purchaseErrorSubscription = purchaseErrorListener(
-      (error: PurchaseError) => {
-        console.log('purchaseErrorListener', error);
-        error?.responseCode == Platform.select({ios: 2, android: 1})
-          ? null
-          : Alert.alert(network?.strings?.Error, error?.message);
-      },
-    );
+    let purchaseUpdated = purchaseUpdatedListener(async purchase => {
+      const receipt = purchase.transactionReceipt;
+      console.warn('purchase', purchase);
+      if (receipt) {
+        RNIap.finishTransaction(receipt);
+      }
+    });
+    let purchaseError = purchaseErrorListener(error => {
+      console.log('purchaseErrorListener', error);
+      error?.responseCode == Platform.select({ios: 2, android: 1})
+        ? null
+        : Alert.alert(network?.strings?.Error, error?.message);
+    });
   };
 
-  const allDone = async () => {
-    if (funcDone) {
+  const allDone = () => {
+    if (funcDone && animDone) {
       runInAction(() => (network.fromSplash = true));
       if (err) {
         Alert.alert(
@@ -96,12 +108,14 @@ export const SplashScreen = observer(({navigation}) => {
           network.strings?.NoConnectionAlert ??
             network.strings?.NoConnectionAlert,
         );
-        // navigation.navigate('OnboardingStack');
       } else {
         // navigation.navigate('OnboardingStack');
-        Object.keys(network?.onboarding).length
+        //!
+        Object.keys(network?.onboarding).length ||
+        Object.keys(network?.registerOnboarding).length
           ? navigation.navigate('OnboardingStack')
           : navigation.navigate('MainStack');
+        //!
         // navigation.navigate('MainStack');
       }
     }
@@ -117,44 +131,70 @@ export const SplashScreen = observer(({navigation}) => {
     }
     console.warn('tracking', tracking);
   };
-  const [token, setToken] = useState(null);
-  const [locale, setLocale] = useState('');
+  const delay = 45;
+  const [stop, setStop] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [animDone, setAnimDone] = useState(false);
+  let btnAnim = useRef(new Animated.Value(90)).current;
+  let textAnim = useRef(new Animated.Value(0)).current;
+  const [stopBtnAnim, setStopBtnAnim] = useState(false);
+  const [stopTextAnim, setStopTextAnim] = useState(false);
+
+  useInterval(() => {
+    if (!stop) {
+      setProgress(progress + 2);
+      if (progress > 130) {
+        setStop(true);
+        setAnimDone(true);
+      }
+    }
+  }, delay);
+
+  useEffect(() => {
+    if (progress > 80 && !stopTextAnim) {
+      setStopTextAnim(true);
+      Animated.timing(textAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+    if (progress > 50 && !stopBtnAnim) {
+      setStopBtnAnim(true);
+      Animated.timing(btnAnim, {
+        toValue: -12,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [progress]);
+
   const goToMain = async () => {
-    let newLocale = strings?.getInterfaceLanguage()?.split('-')[1];
-    setLocale(newLocale);
     OneSignal.setLogLevel(6, 0);
     OneSignal.setAppId('50273246-c3e6-4670-b829-3e51d4b24b51');
     await YaMap.init('31460ec9-f312-465d-a25a-e3017559ad4f');
     getStatus();
     try {
       let newToken = await AsyncStorage.getItem('token');
+      newToken ? runInAction(() => (network.access_token = newToken)) : null;
       console.warn('object123123', newToken);
-      setToken(newToken);
       network.setUniqueId();
-      await authUser();
+      await authUser(undefined, undefined, newToken);
       const localeValue = strings.getInterfaceLanguage();
       if (network?.user?.lang_app !== localeValue) {
         await updateInfo('lang_app', localeValue);
         // await getUserInfo();
       }
-      await Promise.all([
-        getTranslate(),
-        getScreens(),
-        getMenu(),
-        getStores(),
-        getUserCards(),
-        getFavors(),
-        getModals(),
-      ]);
+      await Promise.all([updateAllData(), getRegisterScreens()]);
       ampInstance.logEvent('app opened');
       const subItems = await getTariffs();
-      await Promise.all([initSubs(subItems), getList(), getBasket()]);
+      await initSubs(subItems);
       const fromDeepLink = await CheckDymanicLink();
       console.log('fromDeepLink', fromDeepLink);
       if (fromDeepLink) {
         try {
           await getUserFromLink(fromDeepLink);
-          await getScreens();
+          await getInitialScreens();
         } catch (e) {
           await authUser();
         }
@@ -179,12 +219,12 @@ export const SplashScreen = observer(({navigation}) => {
 
   const screenDelay = 24 * 60 * 60 * 1000;
   const checkReceptScreenDate = async () => {
+    const receptDayDate = await AsyncStorage.getItem('receptDayDate');
     const alreadySignIn = await AsyncStorage.getItem('alreadySignIn');
     if (!alreadySignIn) {
       AsyncStorage.setItem('alreadySignIn', 'Yes');
       return;
     }
-    const receptDayDate = await AsyncStorage.getItem('receptDayDate');
     if (receptDayDate) {
       const date = new Date(receptDayDate);
       if (
@@ -196,6 +236,7 @@ export const SplashScreen = observer(({navigation}) => {
     } else {
       runInAction(() => (network.enableReceptDayScreen = true));
     }
+    // await AsyncStorage.setItem('signInCount', signInCount + 1);
   };
 
   useEffect(() => {
@@ -209,16 +250,16 @@ export const SplashScreen = observer(({navigation}) => {
 
   useEffect(() => {
     allDone();
-  }, [funcDone]);
+  }, [funcDone, animDone]);
 
-  useEffect(() => {
-    const onFocus = navigation.addListener('focus', () => {
-      if (Platform.OS == 'android') {
-        StatusBar.setBackgroundColor('rgba(255, 230, 100, 1)', true);
-      }
-    });
-    return onFocus;
-  }, [navigation]);
+  // useEffect(() => {
+  //   const onFocus = navigation.addListener('focus', () => {
+  //     if (Platform.OS == 'android') {
+  //       StatusBar.setBackgroundColor('rgba(255, 230, 100, 1)', true);
+  //     }
+  //   });
+  //   return onFocus;
+  // }, [navigation]);
   useEffect(() => {
     const onBlur = navigation.addListener('blur', () => {
       if (Platform.OS == 'android') {
@@ -235,36 +276,50 @@ export const SplashScreen = observer(({navigation}) => {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#FFE500',
+          backgroundColor: '#FFF',
         }}>
-        <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-          <Image
+        <View
+          style={{
+            width: '100%',
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+          }}>
+          <Animated.Image
             style={{
-              width: 71,
-              height: 71,
-              tintColor: Colors.textColor,
-              marginRight: 16,
+              width: 70,
+              height: 70,
+              tintColor: Colors.yellow,
+              transform: [{translateX: btnAnim}],
             }}
-            source={require('../../assets/img/splashLogo.png')}
+            source={require('../../assets/img/splashIcon.png')}
           />
-          <View>
-            <Image
-              style={{width: 132, height: 25}}
-              source={require('../../assets/img/splashText.png')}
-            />
-            <Image
-              style={{
-                width: 82,
-                height: 14,
-                marginTop: 8,
-                alignSelf: 'flex-end',
-                opacity: locale == 'RU' ? 1 : 0,
-              }}
-              source={require('../../assets/img/byFoodplan.png')}
-            />
-          </View>
+          <Animated.Image
+            style={{width: 168, height: 24, opacity: textAnim}}
+            source={require('../../assets/img/name.png')}
+          />
         </View>
+        <Text allowFontScaling={false} style={styles.title}>
+          ГОТОВИТЬ ДОМА ПРОСТО
+        </Text>
       </View>
+      <SafeAreaView />
     </>
   );
+});
+
+const styles = StyleSheet.create({
+  title: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Bold',
+    }),
+    fontSize: 11,
+    lineHeight: 15,
+    letterSpacing: 3,
+    color: '#A7A7A7',
+    fontWeight: 'bold',
+    position: 'absolute',
+    bottom: 33,
+  },
 });

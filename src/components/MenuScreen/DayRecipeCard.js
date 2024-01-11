@@ -87,9 +87,9 @@ const DayRecipeCard = observer(({recept, onPress, listHandler}) => {
   const isInFavor = !!network.favorDishes.filter(item => item.id == recept.id)
     .length;
   const isLoading = network.isLoadingBasket == recept.id;
-  const isUnavailable = !!network.unavailableRecipes.filter(
-    item => item.id == recept.id,
-  ).length;
+  const isUnavailable =
+    network.isBasketUser() &&
+    !!network.unavailableRecipes.filter(item => item.id == recept.id).length;
   const isAccess = network.canOpenRec(recept);
   const isInBasket = useMemo(() => {
     if (network.basketInfo?.recipes) {
@@ -166,7 +166,7 @@ const DayRecipeCard = observer(({recept, onPress, listHandler}) => {
     if (isLoading) {
       return (
         <ActivityIndicator
-          color={Colors.textColor}
+          color={isAdded ? '#FFF' : Colors.textColor}
           style={{width: 14, height: 14}}
           size={14}
         />
@@ -175,12 +175,12 @@ const DayRecipeCard = observer(({recept, onPress, listHandler}) => {
     if (isAdded) {
       return (
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Text style={[styles.btnTitle, {marginRight: 2}]}>
+          <Text style={[styles.btnTitle, {marginRight: 2, color: '#FFF'}]}>
             {network?.strings?.Added}
           </Text>
           <Image
             source={require('../../../assets/icons/complete.png')}
-            style={{width: 10, height: 8}}
+            style={{width: 10, height: 8, tintColor: '#FFF'}}
           />
         </View>
       );

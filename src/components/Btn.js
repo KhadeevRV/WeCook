@@ -17,9 +17,10 @@ export const Btn = ({
   title,
   disabled = false,
   customTextStyle,
-  backgroundColor = '',
+  backgroundColor = Colors.yellow,
   underlayColor = '#FFF',
   isLoading = false,
+  children = [],
 }) => {
   return (
     <TouchableHighlight
@@ -35,13 +36,15 @@ export const Btn = ({
       underlayColor={underlayColor}
       disabled={disabled}>
       {isLoading ? (
-        <ActivityIndicator size={'small'} color={Colors.textColor} />
-      ) : (
+        <ActivityIndicator size={'small'} color={'#FFF'} />
+      ) : title ? (
         <Text
           allowFontScaling={false}
           style={{...styles.title, ...customTextStyle}}>
           {title}
         </Text>
+      ) : (
+        children
       )}
     </TouchableHighlight>
   );

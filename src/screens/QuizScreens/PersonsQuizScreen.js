@@ -1,4 +1,4 @@
-import React, {Component, useEffect} from 'react';
+import React, {Component, useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,68 +21,40 @@ import common from '../../../Utilites/Common';
 import SkipHeader from '../../components/SkipHeader';
 import Colors from '../../constants/Colors';
 import QuizItem from '../../components/QuizScreens/QuizItem';
-import network, {getMenu, sendAnswer} from '../../../Utilites/Network';
+import network, {
+  getMenu,
+  sendAnswer,
+  sendDataToUrl,
+} from '../../../Utilites/Network';
 import QuizAnimation from '../../animations/QuizAnimation';
 import {ampInstance} from '../../../App';
-import {strings} from '../../../assets/localization/localization';
+import {WheelPicker} from 'react-native-wheel-picker-android';
+import {Picker} from '@react-native-picker/picker';
+import {GreyBtn} from '../../components/GreyBtn';
 
 const PersonsQuizScreen = observer(({navigation}) => {
-  const items = [
-    {
-      title: '1 ' + network.strings?.Person,
-      id: 1,
-      icons: [1],
-    },
-    {
-      title: '2 ' + network.strings?.Persons,
-      id: 2,
-      icons: [1, 2],
-    },
-    {
-      title: '3 ' + network.strings?.Persons,
-      id: 3,
-      icons: [1, 2, 3],
-    },
-    {
-      title: '4 ' + network.strings?.Persons,
-      id: 4,
-      icons: [1, 2, 3, 4],
-    },
-    {
-      title: '5 ' + network.strings?.Persons2,
-      id: 5,
-      icons: [1, 2, 3, 4, 5],
-    },
-    {
-      title: '6 ' + network.strings?.Persons2,
-      id: 6,
-      icons: [1, 2, 3, 4, 5, 6],
-    },
-    {
-      title: '7 ' + network.strings?.Persons2,
-      id: 7,
-      icons: [1, 2, 3, 4, 5, 6, 7],
-    },
-    {
-      title: '8 ' + network.strings?.Persons2,
-      id: 8,
-      icons: [1, 2, 3, 4, 5, 6, 7, 8],
-    },
-  ];
+  const screen = network.registerOnboarding?.PersonsQuizScreen;
+
+  const items = screen?.values;
+  const withBack =
+    Object.keys(network.registerOnboarding)[0] !== 'PersonsQuizScreen';
 
   const header = () => {
     return (
-      <View>
-        <Text style={styles.title}>{network.strings?.ServeQuantity}</Text>
-        <Text style={styles.subtitle}>
-          {network.strings?.IngredientsAdjustment}
+      <View style={{alignItems: 'center'}} key={'PersonsQuizScreenHeader'}>
+        <Text style={styles.title}>{screen?.title}</Text>
+        <Text style={[styles.subtitle, {color: screen?.description_color}]}>
+          {screen?.description}
         </Text>
       </View>
     );
   };
 
-  const screen = network.onboarding.PersonsQuizScreen;
   const {startAnim, fadeAnim, marginAnim, contentMargin} = QuizAnimation();
+
+  const [selectedPers, setSelectedPers] = useState(
+    screen?.default ? screen.default : 0,
+  );
 
   useEffect(() => {
     if (Platform.OS == 'android') {
@@ -94,30 +66,22 @@ const PersonsQuizScreen = observer(({navigation}) => {
     }
   }, []);
 
-  const answerHandler = item => {
-    sendAnswer(
-      screen?.request_to,
-      'SecondQuizScreen',
-      item?.text,
-      undefined,
-      undefined,
-      item.id,
-    );
-    network.changeProfilePersons(item.id);
-    ampInstance.logEvent('persons confirmed', {count: item.id});
-    // navigation.navigate('MainStack');
-    if (screen?.next_board == 'LoginScreen' && !!network.user?.phone) {
-      navigation.navigate('MainStack');
-    } else {
-      navigation.navigate(screen?.next_board);
-    }
+  const answerHandler = () => {
+    sendDataToUrl({
+      url: screen.route,
+      data: {[screen?.key]: selectedPers},
+    });
+    navigation.navigate(screen?.next_board);
+    ampInstance.logEvent('persons confirmed', {
+      count: selectedPers,
+    });
   };
 
   const skip = () => {
     network.changeProfilePersons(screen?.default);
     sendAnswer(
       screen?.request_to,
-      'SecondQuizScreen',
+      'PersonsQuizScreen',
       undefined,
       undefined,
       undefined,
@@ -138,6 +102,7 @@ const PersonsQuizScreen = observer(({navigation}) => {
         skip={() => skip()}
         goBack={() => navigation.goBack()}
         withSkip={screen?.continue_step}
+        withBack={withBack}
       />
       <Animated.View
         style={{
@@ -146,34 +111,72 @@ const PersonsQuizScreen = observer(({navigation}) => {
           backgroundColor: '#FFF',
           transform: [{translateY: marginAnim}],
         }}>
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={header}
-          data={items}
-          style={{backgroundColor: '#FFF'}}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 50,
-            paddingTop: 7,
-          }}
-          numColumns={2}
-          keyExtractor={(item, index) => item.id}
-          renderItem={({item, index}) => (
-            <Animated.View
+        {header()}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'space-between',
+            paddingBottom: common.getLengthByIPhone7(67),
+          }}>
+          <View />
+          {Platform.OS == 'ios' ? (
+            <Picker
               style={{
-                flex: 0.5,
-                marginRight: index % 2 == 0 ? 15 : 0,
-                transform: [{translateY: contentMargin}],
-              }}>
-              <QuizItem
-                title={item.title}
-                onPress={() => answerHandler(item)}
-                icons={item.icons}
-                persons={true}
-              />
-            </Animated.View>
+                width: common.getLengthByIPhone7(252),
+                alignSelf: 'center',
+                // height: 152,
+              }}
+              itemStyle={{
+                fontSize: 22,
+                fontWeight: 'bold',
+                fontFamily:
+                  Platform.OS == 'ios'
+                    ? 'SF Pro Display'
+                    : 'SFProDisplay-Regular',
+                backgroundColor: 'transparent',
+              }}
+              selectedValue={selectedPers}
+              onValueChange={itemValue => setSelectedPers(itemValue)}>
+              {items?.map((item, index) => (
+                <Picker.Item
+                  label={item?.name}
+                  value={item?.value}
+                  key={index}
+                />
+              ))}
+            </Picker>
+          ) : (
+            <WheelPicker
+              data={items?.map(item => item.name)}
+              style={{
+                width: common.getLengthByIPhone7(252),
+                alignSelf: 'center',
+                height: 252,
+              }}
+              itemTextSize={22}
+              selectedItemTextFontFamily={'SFProDisplay-Bold'}
+              itemTextFontFamily={'SFProDisplay-Bold'}
+              itemTextColor={Colors.grayColor}
+              selectedItemTextSize={22}
+              initPosition={2}
+              hideIndicator={true}
+              selectedItemTextColor={Colors.textColor}
+              onItemSelected={index => setSelectedPers(items[index].value)}
+              backgroundColor="white"
+            />
           )}
-        />
+          <Btn
+            title={screen?.button_text}
+            customStyle={{
+              width: common.getLengthByIPhone7(140),
+              alignSelf: 'center',
+              backgroundColor: screen?.button_background,
+            }}
+            onPress={() => answerHandler()}
+            underlayColor={screen?.button_background}
+            customTextStyle={{color: screen?.button_text_color}}
+          />
+        </View>
       </Animated.View>
       <SafeAreaView backgroundColor={'#FFF'} />
     </>
@@ -191,7 +194,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 26,
     fontWeight: Platform.select({ios: '800', android: 'bold'}),
-    marginBottom: 20,
+    color: Colors.textColor,
+    marginVertical: 27,
+    textAlign: 'center',
   },
   subtitle: {
     fontFamily: Platform.select({
@@ -201,6 +206,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 17,
     fontWeight: '500',
+    textAlign: 'center',
+    color: Colors.grayColor,
     marginBottom: 20,
   },
 });

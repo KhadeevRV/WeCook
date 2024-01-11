@@ -53,7 +53,7 @@ export const AddressesModal = observer(({modal, closeModal, navigation}) => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   borderRadius: 10,
-                  backgroundColor: isCurrent ? '#FFE600' : Colors.grayColor,
+                  backgroundColor: isCurrent ? '#7CB518' : Colors.grayColor,
                 }}>
                 {isCurrent ? (
                   <View

@@ -12,22 +12,23 @@ import {
   TouchableHighlight,
   Linking,
 } from 'react-native';
-import {getBottomSpace} from 'react-native-iphone-x-helper';
 import Modal from 'react-native-modal';
 import network, {sendModalId} from '../../Utilites/Network';
 import Colors from '../constants/Colors';
 import {navigationRef} from '../navigation/AppNavigation';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export const ModalManager = observer(() => {
   const [isVisible, setIsVisible] = useState(false);
   const [data, setData] = useState({});
+  const insets = useSafeAreaInsets();
 
   const closeModal = useCallback(() => {
     const newModals = network.modals.filter(modal => modal.id !== data?.id);
     runInAction(() => (network.modals = newModals));
     sendModalId(data?.id);
     setIsVisible(false);
-  }, [network.modals, network?.modals?.length]);
+  }, [network.modals, network.modals.length, data]);
 
   const checkModal = useCallback(
     screen => {
@@ -42,7 +43,6 @@ export const ModalManager = observer(() => {
 
   useEffect(() => {
     const newData = checkModal(network.currentScreen);
-    console.log(network.currentScreen, network?.modals);
     if (newData) {
       setData(newData);
       setTimeout(() => {
@@ -86,7 +86,7 @@ export const ModalManager = observer(() => {
       propagateSwipe={true}
       backdropOpacity={0.4}
       style={{margin: 0, justifyContent: 'flex-end'}}>
-      <View style={styles.mainBlock}>
+      <View style={[styles.mainBlock, {paddingBottom: 8 + insets.bottom}]}>
         <Text style={styles.header} allowFontScaling={false}>
           {data?.header}
         </Text>
@@ -134,7 +134,6 @@ const styles = StyleSheet.create({
   },
   mainBlock: {
     backgroundColor: '#FFF',
-    paddingBottom: 8 + getBottomSpace(),
     paddingTop: 22,
     borderTopStartRadius: 16,
     borderTopEndRadius: 16,

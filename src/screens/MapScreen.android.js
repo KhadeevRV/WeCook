@@ -54,6 +54,9 @@ const MapScreen = observer(({navigation, route}) => {
   const [addressTips, setAddressTips] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const fromOnboarding = route.params?.fromOnboarding;
+  const withBack =
+    fromOnboarding &&
+    Object.keys(network.registerOnboarding)[0] === 'MapScreen';
   const screen = network.onboarding?.MapScreen;
 
   const snapPoints = useMemo(
@@ -354,7 +357,7 @@ const MapScreen = observer(({navigation, route}) => {
           disabled={isLoading}
           underlayColor={Colors.underLayYellow}>
           {isLoading ? (
-            <ActivityIndicator color={Colors.textColor} />
+            <ActivityIndicator color={'#FFF'} />
           ) : (
             <Text style={styles.addressSheetValue}>
               {isFullAdr
@@ -426,15 +429,17 @@ const MapScreen = observer(({navigation, route}) => {
           />
         </>
       )}
-      <TouchableOpacity
-        disabled={isLoading}
-        style={styles.backView}
-        onPress={() => navigation.goBack()}>
-        <Image
-          source={require('../../assets/icons/back.png')}
-          style={{width: 18, height: 18}}
-        />
-      </TouchableOpacity>
+      {withBack && (
+        <TouchableOpacity
+          disabled={isLoading}
+          style={styles.backView}
+          onPress={() => navigation.goBack()}>
+          <Image
+            source={require('../../assets/icons/back.png')}
+            style={{width: 18, height: 18}}
+          />
+        </TouchableOpacity>
+      )}
       <TouchableOpacity
         disabled={isLoading}
         style={[
@@ -470,7 +475,7 @@ const MapScreen = observer(({navigation, route}) => {
             borderRadius: 20,
             elevation: 12,
           }}>
-          <Text style={styles.addressSheetValue}>
+          <Text style={[styles.addressSheetValue, {color: Colors.textColor}]}>
             {network.strings?.WithoutDeliveryButton}
           </Text>
         </TouchableOpacity>
@@ -518,6 +523,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
+    color: '#FFF',
   },
   touchContainer: {
     backgroundColor: Colors.yellow,

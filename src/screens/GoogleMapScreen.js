@@ -544,6 +544,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
+    color: '#FFF',
   },
   touchContainer: {
     backgroundColor: Colors.yellow,

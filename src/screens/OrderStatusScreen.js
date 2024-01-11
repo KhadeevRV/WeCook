@@ -21,7 +21,6 @@ import {
   TouchableHighlight,
 } from 'react-native-gesture-handler';
 import network, {
-  authUser,
   cancelUserOrder,
   createOrder,
   getUserInfo,
@@ -195,7 +194,7 @@ const OrderStatusScreen = observer(({navigation, route}) => {
             alignItems: 'center',
           }}>
           <Text style={[styles.title, {marginBottom: 20}]}>
-            Что-то пошло не так
+            {network?.strings?.Error}
           </Text>
           <Text style={styles.commonText}>{error.toString()}</Text>
         </View>
@@ -247,7 +246,7 @@ const OrderStatusScreen = observer(({navigation, route}) => {
                       styles.statusContainer,
                       {
                         backgroundColor:
-                          status.id <= currentStatusId ? '#FFE600' : '#F5F5F5',
+                          status.id <= currentStatusId ? '#7CB518' : '#F5F5F5',
                       },
                     ]}>
                     <Image
@@ -379,7 +378,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
-    color: Colors.textColor,
+    color: '#FFF',
     textAlign: 'center',
   },
   statusContainer: {

@@ -237,10 +237,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
-    color: Colors.textColor,
+    color: '#FFF',
   },
   touchContainer: {
-    backgroundColor: '#FFE600',
+    backgroundColor: '#7CB518',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',

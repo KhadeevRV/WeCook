@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     height: 10,
   },
   loaderComplete: {
-    backgroundColor: '#00C108',
+    backgroundColor: '#FFD600',
     borderRadius: 20,
     height: 10,
   },

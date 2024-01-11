@@ -1,39 +1,19 @@
-import React, {
-  Component,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   Image,
   Platform,
   Alert,
-  DevSettings,
+  TouchableOpacity,
   Linking,
 } from 'react-native';
-import {
-  TouchableOpacity,
-  FlatList,
-  ScrollView,
-  TextInput,
-} from 'react-native-gesture-handler';
-import {observer, Observer, useObserver} from 'mobx-react-lite';
-import {runInAction} from 'mobx';
+import {ScrollView} from 'react-native-gesture-handler';
+import {observer} from 'mobx-react-lite';
 import common from '../../Utilites/Common';
-import SkipHeader from '../components/SkipHeader';
 import Colors from '../constants/Colors';
-import network, {
-  payAppleOrAndroid,
-  getMenu,
-  authUser,
-  getFavors,
-  getUserInfo,
-} from '../../Utilites/Network';
+import network, {payAppleOrAndroid, getUserInfo} from '../../Utilites/Network';
 import PayWallItem from '../components/PayWallScreen/PayWallItem';
 import {Btn} from '../components/Btn';
 import * as RNIap from 'react-native-iap';
@@ -45,7 +25,9 @@ import {FooterItem} from './ProfileScreen';
 import DayRecipeCard from '../components/MenuScreen/DayRecipeCard';
 import {TrialModal} from '../components/PayWallScreen/TrialModal';
 import RNRestart from 'react-native-restart';
-import {getBottomSpace} from 'react-native-iphone-x-helper';
+import {getBottomSpace, getStatusBarHeight} from 'react-native-iphone-x-helper';
+import {updateAllData} from './SplashScreen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const sendAnalytics = plan => {
   let today = new Date();
@@ -113,11 +95,13 @@ const PayWallScreen = observer(({navigation, route}) => {
   const [trialLoading, setTrialLoading] = useState(false);
   const fromOnboarding = route?.params?.fromOnboarding;
   const data = route.params?.data;
+  const [userLoadingData, setUserLoadingData] = useState(!!fromOnboarding);
   const [textMode, setTextMode] = useState('privacy');
   const [privacyModal, setprivacyModal] = useState(false);
   const [trialModal, setTrialModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
-  const screen = data ?? network.onboarding.PayWallScreen;
+  const screen = data ?? network.registerOnboarding.PayWallScreen;
   const notTrialPlans = useMemo(() => {
     if (screen?.plans.length) {
       let plans = screen?.plans.filter(plan => !plan?.trial);
@@ -275,7 +259,9 @@ const PayWallScreen = observer(({navigation, route}) => {
         key={'PaywallTitle'}>
         <Text style={styles.logoTitle}>
           WeCook{' '}
-          <Text style={[styles.logoTitle, {color: '#00C108'}]}>Prime</Text>
+          <Text style={[styles.logoTitle, {color: Colors.underLayYellow}]}>
+            Prime
+          </Text>
         </Text>
       </View>
     );
@@ -291,72 +277,97 @@ const PayWallScreen = observer(({navigation, route}) => {
     }
   }, []);
 
-  const footerArr = [
-    {
-      id: 1,
-      title: 'Политика конфиденциальности',
-      onPress: () => {
-        setTextMode('privacy');
-        setprivacyModal(true);
-      },
-    },
-    {
-      id: 2,
-      title: 'Пользовательское соглашение',
-      onPress: () => {
-        setTextMode('agreement');
-        setprivacyModal(true);
-      },
-    },
-    {
-      id: 3,
-      title: 'User agreement',
-      onPress: () => {
-        setTextMode('UserAgreement');
-        setprivacyModal(true);
-      },
-    },
-  ];
+  const renderChecks = useCallback(
+    () => (
+      <View style={{paddingHorizontal: 16}}>
+        {screen?.list.map((check, i) => (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              marginBottom: 14,
+            }}
+            key={i.toString()}>
+            <Image
+              source={{uri: check?.icon}}
+              style={{
+                width: 18,
+                height: 18,
+                marginRight: 11,
+              }}
+            />
+            <Text style={{...styles.checkText}}>{check?.text}</Text>
+          </View>
+        ))}
+      </View>
+    ),
+    [screen?.list],
+  );
+  const onFetch = useCallback(async () => {
+    if (fromOnboarding) {
+      const startDate = new Date();
+      setUserLoadingData(true);
+      await updateAllData();
+      const endDate = new Date();
+      const dateDiff = Math.abs(startDate - endDate);
+      console.log('dateDiff', dateDiff);
+      if (screen?.timeout) {
+        dateDiff > screen?.timeout
+          ? setUserLoadingData(false)
+          : setTimeout(() => {
+              setUserLoadingData(false);
+            }, screen?.timeout - dateDiff);
+      } else {
+        setUserLoadingData(false);
+      }
+    }
+  }, [fromOnboarding, screen?.timeout]);
+
+  useEffect(() => {
+    onFetch();
+  }, []);
+
   return (
     <>
-      <SafeAreaView backgroundColor={'#FFF'} />
       <Spinner visible={loading} />
-      <SkipHeader
-        skip={() => onSkip(network.user?.subscription?.trial || !trialPlan)}
-        withBack={false}
-        withSkip={data ? true : screen?.continue_step}
-        renderCustomTitle={renderTitle}
-      />
       <ScrollView
         style={{flex: 1, backgroundColor: '#FFF'}}
-        contentContainerStyle={{paddingTop: 16}}
         showsVerticalScrollIndicator={false}>
+        {!userLoadingData && (
+          <TouchableOpacity
+            onPress={() => onSkip(true)}
+            style={styles.closeView}>
+            <Image
+              style={{width: 18, height: 18}}
+              source={require('../../assets/icons/close.png')}
+            />
+          </TouchableOpacity>
+        )}
         {/*<Text style={styles.title}>{screen?.title}</Text>*/}
-        <View style={{paddingHorizontal: 16}}>
-          <Image
-            source={{uri: screen?.image}}
-            borderRadius={16}
-            style={{
-              width: '100%',
-              alignSelf: 'center',
-              height: 146,
-              borderRadius: 16,
-            }}
-          />
-          <View style={{marginTop: 24}}>{plansView}</View>
+        <Image
+          source={{uri: screen?.image}}
+          style={{
+            width: '100%',
+            alignSelf: 'center',
+            height: common.getLengthByIPhone7(264),
+          }}
+        />
+        <View style={{marginVertical: 24, paddingHorizontal: 16}}>
+          {plansView}
         </View>
+        {renderChecks()}
       </ScrollView>
       <View
         style={{
           alignItems: 'center',
           padding: 8,
           backgroundColor: '#FFF',
-          paddingBottom: getBottomSpace(),
+          paddingBottom: insets.bottom + 8,
         }}>
         {/*{footerArr.map(item => (*/}
         {/*  <FooterItem title={item.title} onPress={item.onPress} key={item.id} />*/}
         {/*))}*/}
-        {/*<Text style={styles.decr}>{screen?.description_bottom}</Text>*/}
+        <Text style={styles.decr}>{screen?.description_bottom}</Text>
         <Btn
           underlayColor={Colors.underLayYellow}
           title={notTrialPlans?.[currentPlan]?.button}
@@ -365,9 +376,15 @@ const PayWallScreen = observer(({navigation, route}) => {
             width: common.getLengthByIPhone7(0) - 32,
             borderRadius: 16,
             backgroundColor: Colors.underLayYellow,
+            marginTop: 12,
             height: 54,
           }}
-          customTextStyle={{fontWeight: '600', fontSize: 16, lineHeight: 19}}
+          customTextStyle={{
+            fontWeight: '600',
+            fontSize: 16,
+            lineHeight: 19,
+            color: '#FFF',
+          }}
           onPress={() =>
             payHandle(
               notTrialPlans[currentPlan],
@@ -382,7 +399,7 @@ const PayWallScreen = observer(({navigation, route}) => {
           style={{
             flexDirection: 'row',
             justifyContent: 'center',
-            marginTop: 16,
+            marginTop: 8,
           }}>
           <Text
             style={[styles.restoreText, {marginRight: 24}]}
@@ -427,6 +444,13 @@ const styles = StyleSheet.create({
     fontWeight: Platform.select({ios: '800', android: 'bold'}),
     color: Colors.textColor,
   },
+  closeView: {
+    position: 'absolute',
+    top: getStatusBarHeight(),
+    left: 0,
+    padding: 24,
+    zIndex: 100,
+  },
   title: {
     fontFamily: Platform.select({
       ios: 'SF Pro Display',
@@ -447,14 +471,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.grayColor,
     textAlign: 'center',
-    marginBottom: 25,
   },
   restoreText: {
     fontFamily: Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Medium',
-    fontSize: 12,
-    lineHeight: 14,
-    color: Colors.textColor,
+    fontSize: 13,
+    lineHeight: 16,
+    color: '#B3B3B3',
     fontWeight: '500',
     textAlign: 'center',
+  },
+  checkText: {
+    fontFamily: Platform.OS == 'ios' ? 'SF Pro Display' : 'SFProDisplay-Medium',
+    fontSize: 13,
+    lineHeight: 16,
+    color: Colors.textColor,
+    fontWeight: '500',
   },
 });

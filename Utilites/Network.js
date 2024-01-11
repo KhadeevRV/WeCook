@@ -16,6 +16,7 @@ class Network {
   dayDishes = [];
   fromSplash = false;
   onboarding = {};
+  registerOnboarding = {};
   deviceId = null;
   pushId = null;
   tokenType = '';
@@ -132,27 +133,35 @@ class Network {
     //     ],
     //   );
     // }
-    let newDish = dish;
-    const newArr = [newDish, ...this.favorDishes];
-    newDish.new = true;
-    this.favorDishes = newArr;
-    newArr.length == 2 ? (this.user.favorTrigger = true) : null;
-    await favorHandler(dish.id, 'add');
-    ampInstance.logEvent('added to favorites', {recipe_id: dish?.id});
+    try {
+      let newDish = dish;
+      const newArr = [newDish, ...this.favorDishes];
+      newArr.length == 2 ? (this.user.favorTrigger = true) : null;
+      favorHandler(dish.id, 'add');
+      newDish.new = true;
+      runInAction(() => (this.favorDishes = newArr));
+      ampInstance.logEvent('added to favorites', {recipe_id: dish?.id});
+    } catch (e) {
+      this.sendAnalyticError(JSON.stringify(e));
+    }
   }
 
-  deleteFromFavor(dish) {
-    const newArr = this.favorDishes.filter(item => item.id != dish.id);
-    this.favorDishes = newArr;
-    favorHandler(dish.id, 'remove');
+  async deleteFromFavor(dish) {
+    try {
+      favorHandler(dish.id, 'remove');
+      const newArr = this.favorDishes.filter(item => item.id != dish.id);
+      runInAction(() => (this.favorDishes = newArr));
+    } catch (e) {
+      this.sendAnalyticError(JSON.stringify(e));
+    }
   }
 
   canOpenRec(rec) {
     // return true;
     const recAccess = rec?.access;
     const userAccess = this.user?.access;
-    const dayAccess = this.dayDishes.filter(dish => dish.id == rec.id).length;
-    if (dayAccess || userAccess || recAccess || network.isBasketUser()) {
+    // const dayAccess = this.dayDishes.filter(dish => dish.id == rec.id).length;
+    if (userAccess || recAccess) {
       return true;
     } else {
       return false;
@@ -334,7 +343,7 @@ class Network {
 const network = new Network();
 export default network;
 
-export function authUser(email, password) {
+export function authUser(email, password, token) {
   return new Promise(function (resolve, reject) {
     fetch(Config.apiDomain + 'auth/login', {
       method: 'POST',
@@ -348,6 +357,7 @@ export function authUser(email, password) {
         push_id: network.pushId,
         email,
         password,
+        token,
       }),
     })
       .then(response => {
@@ -359,7 +369,6 @@ export function authUser(email, password) {
               network.user = data;
               network.access_token = data.token;
             });
-            AsyncStorage.setItem('token', data.token);
             resolve();
           } else {
             network.sendAnalyticError(JSON.stringify(data.message));
@@ -377,7 +386,7 @@ export function authUser(email, password) {
 
 export function getMenu() {
   return new Promise(function (resolve, reject) {
-    fetch(Config.apiDomain + 'screens/main-2', {
+    fetch(Config.apiDomain + 'screens/main', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -454,9 +463,9 @@ export function getBasket() {
   });
 }
 
-export function getScreens() {
+export function getInitialScreens() {
   return new Promise(function (resolve, reject) {
-    fetch(Config.apiDomain + 'screens/onbording', {
+    fetch(Config.apiDomain + 'screens/onbording/auth', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -466,10 +475,41 @@ export function getScreens() {
     })
       .then(response => {
         response.json().then(data => {
-          console.warn('getScreens: ' + JSON.stringify(data));
-          if (data) {
+          console.log('getInitialScreens: ' + JSON.stringify(data));
+          if (data.status === 'ok') {
             mobx.runInAction(() => {
-              network.onboarding = data;
+              network.onboarding = data.data ?? {};
+            });
+            resolve();
+          } else {
+            network.sendAnalyticError(JSON.stringify(data.message));
+            reject(data.message);
+          }
+        });
+      })
+      .catch(err => {
+        network.sendAnalyticError(JSON.stringify(err));
+        reject('Unknown error.Try again later.');
+      });
+  });
+}
+
+export function getRegisterScreens() {
+  return new Promise(function (resolve, reject) {
+    fetch(Config.apiDomain + 'screens/onbording/register', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: 'Bearer ' + network.access_token,
+      },
+    })
+      .then(response => {
+        response.json().then(data => {
+          console.log('getRegisterScreens: ' + JSON.stringify(data));
+          if (data.status === 'ok') {
+            mobx.runInAction(() => {
+              network.registerOnboarding = data.data ?? {};
             });
             resolve();
           } else {
@@ -2323,7 +2363,6 @@ export function getModals() {
       },
     })
       .then(response => {
-        console.log('getModalsresponse: ' + JSON.stringify(response));
         response.json().then(data => {
           console.log('getModals: ' + JSON.stringify(data));
           if (data.status == 'ok') {
@@ -2334,6 +2373,66 @@ export function getModals() {
           } else {
             network.sendAnalyticError(JSON.stringify(data.message));
             reject(data.message);
+          }
+        });
+      })
+      .catch(err => {
+        network.sendAnalyticError(JSON.stringify(err));
+        reject('Unknown error.Try again later.');
+      });
+  });
+}
+
+export function loginEmail({email, code}) {
+  const body = {email, device_id: network.deviceId};
+  code ? (body.code = code) : null;
+  return new Promise(function (resolve, reject) {
+    fetch(Config.apiDomain + 'auth/login/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + network.access_token,
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+      .then(response => {
+        response.json().then(data => {
+          console.log('loginEmail: ' + email + JSON.stringify(data));
+          if (data.status == 'ok') {
+            resolve(data?.data);
+          } else {
+            network.sendAnalyticError(JSON.stringify(data.message));
+            reject(data.message);
+          }
+        });
+      })
+      .catch(err => {
+        network.sendAnalyticError(JSON.stringify(err));
+        reject('Unknown error.Try again later.');
+      });
+  });
+}
+
+export function sendDataToUrl({url, data}) {
+  return new Promise(function (resolve, reject) {
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + network.access_token,
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => {
+        response.json().then(jsonData => {
+          console.log('sendDataToUrl: ' + JSON.stringify(jsonData));
+          if (jsonData?.status == 'ok') {
+            resolve(jsonData?.data);
+          } else {
+            network.sendAnalyticError(JSON.stringify(data.message));
+            reject(jsonData.message);
           }
         });
       })

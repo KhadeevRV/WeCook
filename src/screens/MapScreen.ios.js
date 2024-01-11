@@ -18,11 +18,6 @@ import {observer, Observer, useObserver} from 'mobx-react-lite';
 import YaMap, {Geocoder, Suggest} from 'react-native-yamap';
 import Colors from '../constants/Colors';
 import BottomSheet from '@gorhom/bottom-sheet';
-import {
-  getBottomSpace,
-  getStatusBarHeight,
-  isIphoneX,
-} from 'react-native-iphone-x-helper';
 import SearchBar from '../components/SearchBar';
 import network, {
   getGeoData,
@@ -36,11 +31,13 @@ import {check, PERMISSIONS, RESULTS, request} from 'react-native-permissions';
 import Config from '../constants/Config';
 import {ShadowView} from '../components/ShadowView';
 import {strings} from '../../assets/localization/localization';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 Geocoder.init('e95c2f91-cd98-4e7c-be76-c7ec244d0ef1');
 
 const MapScreen = observer(({navigation, route}) => {
-  const bottomSheetHeight = 190 + getBottomSpace();
+  const insets = useSafeAreaInsets();
+  const bottomSheetHeight = 190 + insets.bottom;
   const animVal = useRef(new Animated.Value(0)).current;
   const dotOpacity = useRef(new Animated.Value(0)).current;
   const map = useRef(null);
@@ -57,11 +54,15 @@ const MapScreen = observer(({navigation, route}) => {
   const [addressTips, setAddressTips] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const fromOnboarding = route.params?.fromOnboarding;
+  const withBack =
+    !fromOnboarding ||
+    (fromOnboarding &&
+      Object.keys(network.registerOnboarding)[0] === 'MapScreen');
   const screen = network.onboarding?.MapScreen;
   const snapPoints = useMemo(
     () => [
       bottomSheetHeight,
-      Dimensions.get('window').height - (20 + getStatusBarHeight()),
+      Dimensions.get('window').height - (20 + insets.top),
     ],
     [],
   );
@@ -353,7 +354,7 @@ const MapScreen = observer(({navigation, route}) => {
           disabled={isLoading}
           underlayColor={Colors.underLayYellow}>
           {isLoading ? (
-            <ActivityIndicator color={Colors.textColor} />
+            <ActivityIndicator color={'#FFF'} />
           ) : (
             <Text style={styles.addressSheetValue}>
               {isFullAdr
@@ -425,15 +426,17 @@ const MapScreen = observer(({navigation, route}) => {
             },
           ]}
         />
-        <TouchableOpacity
-          disabled={isLoading}
-          style={styles.backView}
-          onPress={() => navigation.goBack()}>
-          <Image
-            source={require('../../assets/icons/back.png')}
-            style={{width: 18, height: 18}}
-          />
-        </TouchableOpacity>
+        {withBack && (
+          <TouchableOpacity
+            disabled={isLoading}
+            style={[styles.backView, {top: insets.top}]}
+            onPress={() => navigation.goBack()}>
+            <Image
+              source={require('../../assets/icons/back.png')}
+              style={{width: 18, height: 18}}
+            />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           disabled={isLoading}
           style={[
@@ -466,7 +469,8 @@ const MapScreen = observer(({navigation, route}) => {
                 backgroundColor: '#FFF',
                 borderRadius: 20,
               }}>
-              <Text style={styles.addressSheetValue}>
+              <Text
+                style={[styles.addressSheetValue, {color: Colors.textColor}]}>
                 {network.strings?.WithoutDeliveryButton}
               </Text>
             </TouchableOpacity>
@@ -516,12 +520,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
+    color: '#FFF',
   },
   touchContainer: {
     backgroundColor: Colors.yellow,
     marginHorizontal: 16,
     marginTop: 12,
-    marginBottom: isIphoneX() ? 0 : 12,
+    marginBottom: 12,
     paddingVertical: 14,
     alignItems: 'center',
     borderRadius: 16,
@@ -569,7 +574,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'absolute',
     left: 16,
-    top: 16 + getStatusBarHeight(),
   },
   locationView: {
     width: 40,

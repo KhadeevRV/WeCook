@@ -291,7 +291,7 @@ export const IngredientItem = ({
             }}>
             {animStart ? (
               <Image
-                style={{width: 8, height: 8}}
+                style={{width: 8, height: 8, tintColor: '#FFF'}}
                 source={require('../../../assets/icons/closeModal.png')}
               />
             ) : currentItem.is_buyed ? (

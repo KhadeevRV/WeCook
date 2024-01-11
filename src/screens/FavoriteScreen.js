@@ -7,11 +7,17 @@ import {
   Image,
   Platform,
   TouchableOpacity,
-  FlatList,
+  ImageBackground,
   Animated,
   Dimensions,
   Alert,
 } from 'react-native';
+import {
+  FlatList,
+  ScrollView,
+  TextInput,
+  TouchableHighlight,
+} from 'react-native-gesture-handler';
 import network, {getList} from '../../Utilites/Network';
 import {observer, Observer, useObserver} from 'mobx-react-lite';
 import {runInAction} from 'mobx';
@@ -28,6 +34,10 @@ import {strings} from '../../assets/localization/localization';
 import {SaleModal} from '../components/PayWallScreen/SaleModal';
 
 const FavoriteScreen = observer(({navigation}) => {
+  const [filteredFavors, setFilteredFavors] = useState(network.favorDishes);
+  const [filterModal, setFilterModal] = useState(false);
+  const filterNames = ['Завтраки', 'Обеды', 'Ужины', 'Салаты', 'Десерты'];
+  const [currentFilters, setCurrentFilters] = useState([]);
   const [unavailableModal, setUnavailableModal] = useState(false);
   const [unavailableRecipe, setUnavailableRecipe] = useState({});
   const [saleModal, setSaleModal] = useState(false);
@@ -44,35 +54,65 @@ const FavoriteScreen = observer(({navigation}) => {
     }
   };
 
+  const openPaywall = () => {
+    if (network.paywalls?.paywall_sale_modal) {
+      setSaleModal(true);
+    } else {
+      navigation.navigate('PayWallScreen', {
+        data: network.paywalls[network.user?.banner?.type],
+      });
+    }
+  };
+
   const listHandler = (isInBasket, recept) => {
     if (network.isBasketUser()) {
       const isUnavailable = network.unavailableRecipes.find(
         rec => rec.id == recept.id,
       );
-      if (isInBasket || !isUnavailable) {
+      if (isInBasket) {
         network.basketHandle(
           isInBasket,
           recept.id,
           recept.persons,
-          'FavoriteScreen',
+          'MenuScreen',
         );
-      } else {
+        return;
+      }
+      if (!network.canOpenRec(recept)) {
+        openPaywall();
+        return;
+      }
+      if (isUnavailable) {
         setUnavailableRecipe(recept);
         setUnavailableModal(true);
+        return;
       }
+      network.basketHandle(isInBasket, recept.id, recept.persons, 'MenuScreen');
     } else {
       // Если блюдо в списке, то удаляем. Если нет, то проверяем, можно ли его добавить(открыть)
       if (isInBasket) {
         network.deleteFromList(recept);
       } else if (network.canOpenRec(recept)) {
         network.addToList(recept);
-      } else if (network.paywalls?.paywall_sale_modal) {
-        setSaleModal(true);
       } else {
-        navigation.navigate('PayWallScreen', {
-          data: network.paywalls[network.user?.banner?.type],
-        });
+        openPaywall();
       }
+    }
+  };
+
+  const filterHandler = what => {
+    setCurrentFilters(what);
+    if (what.length) {
+      const newFavor = network.favorDishes.filter(dish => {
+        for (let i = 0; i < what.length; i++) {
+          if (dish?.eating == what[i]) {
+            return true;
+          }
+        }
+      });
+      setFilteredFavors(newFavor);
+    } else {
+      setFilteredFavors(network.favorDishes);
     }
   };
 
@@ -120,7 +160,7 @@ const FavoriteScreen = observer(({navigation}) => {
         <FlatList
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{padding: 16}}
-          data={network.favorDishes}
+          data={filteredFavors}
           extraData={network.favorDishes}
           initialNumToRender={3}
           keyExtractor={(item, index) => item.id}

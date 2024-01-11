@@ -18,17 +18,12 @@ import network, {getRecipe} from '../../Utilites/Network';
 import RecipeOfTheDay from '../components/ReceptDayScreen/RecipeOfTheDay';
 import common from '../../Utilites/Common';
 import {getStatusBarHeight} from 'react-native-iphone-x-helper';
-import LinearGradient from 'react-native-linear-gradient';
-import FlashMessage, {
-  showMessage,
-  hideMessage,
-} from 'react-native-flash-message';
-import GestureRecognizer from 'react-native-swipe-gestures';
 import OneSignal from 'react-native-onesignal';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import Config from '../constants/Config';
 import {useFocusEffect} from '@react-navigation/native';
 import changeNavigationBarColor from 'react-native-navigation-bar-color';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export const CheckDymanicLink = async navigation => {
   const handleDynamicLink = link => {
@@ -117,6 +112,7 @@ const ReceptDayScreen = observer(({navigation, route}) => {
     Platform.select({ios: 0, android: getStatusBarHeight()});
   const [page, setPage] = useState(0);
   const [stop, setstop] = useState(false);
+  const insets = useSafeAreaInsets();
   const screens = [];
   const scroll = useRef(null);
 
@@ -188,6 +184,7 @@ const ReceptDayScreen = observer(({navigation, route}) => {
   useEffect(() => {
     AsyncStorage.setItem('receptDayDate', String(new Date()));
     CheckDymanicLink(navigation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useFocusEffect(
@@ -200,6 +197,7 @@ const ReceptDayScreen = observer(({navigation, route}) => {
 
       return () =>
         BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
 
@@ -211,10 +209,10 @@ const ReceptDayScreen = observer(({navigation, route}) => {
           position: 'absolute',
           right: 0,
           zIndex: 10,
-          top: getStatusBarHeight(),
+          top: insets.top,
         }}>
         <TouchableOpacity
-          style={{padding: 16}}
+          style={{paddingHorizontal: 16, paddingBottom: 16}}
           onPress={() => navigation.navigate('MenuScreen')}
           activeOpacity={1}>
           <Image
@@ -227,9 +225,8 @@ const ReceptDayScreen = observer(({navigation, route}) => {
         style={{
           position: 'absolute',
           zIndex: 10,
-          top: getStatusBarHeight(),
+          top: insets.top,
           alignSelf: 'center',
-          paddingTop: 16,
           alignItems: 'center',
         }}>
         <Text style={styles.title}>{network.strings?.ChoiceOfTheDayText}</Text>

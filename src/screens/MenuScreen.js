@@ -1,69 +1,46 @@
-import React, {useMemo, useState, useRef, useEffect} from 'react';
+import React, {useMemo, useState, useRef, useEffect, useCallback} from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Image,
   Platform,
-  KeyboardAvoidingView,
   ImageBackground,
-  Dimensions,
   SafeAreaView,
   BackHandler,
   StatusBar,
-  Animated,
-  InteractionManager,
   Alert,
-  AsyncStorage,
 } from 'react-native';
 import {
   TouchableOpacity,
   FlatList,
   ScrollView,
-  TextInput,
   TouchableHighlight,
 } from 'react-native-gesture-handler';
 import network, {
   authUser,
-  getList,
-  getRecipe,
   getUnavailableProducts,
   getUserInfo,
 } from '../../Utilites/Network';
-import {observer, Observer, useObserver} from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
 import {runInAction} from 'mobx';
-import {Btn} from '../components/Btn';
 import common from '../../Utilites/Common';
 import Colors from '../constants/Colors';
 import DayRecipeCard from '../components/MenuScreen/DayRecipeCard';
-import LinearGradient from 'react-native-linear-gradient';
-import {getBottomSpace, getStatusBarHeight} from 'react-native-iphone-x-helper';
-import {FilterModal} from '../components/MenuScreen/FilterModal';
-import {ChangeWeeksModal} from '../components/MenuScreen/ChangeWeeksModal';
-import {StoriesModal} from '../components/MenuScreen/StoriesModal';
-import Spinner from 'react-native-loading-spinner-overlay';
-import FastImage from 'react-native-fast-image';
+import {getStatusBarHeight} from 'react-native-iphone-x-helper';
 import BottomListBtn from '../components/BottomListBtn';
 import Config from '../constants/Config';
 import {useFocusEffect} from '@react-navigation/native';
 import changeNavigationBarColor from 'react-native-navigation-bar-color';
-import {GreyBtn} from '../components/GreyBtn';
 import {ShadowView} from '../components/ShadowView';
 import {AddressesModal} from '../components/MenuScreen/AddressesModal';
 import {StoreView} from './StoresScreen';
 import {statuses} from './OrderStatusScreen';
 import OneSignal from 'react-native-onesignal';
-import dynamicLinks from '@react-native-firebase/dynamic-links';
 import {CheckDymanicLink} from './ReceptDayScreen';
-// import Animated from 'react-native-reanimated'
-// import { SafeAreaView } from 'react-native-safe-area-context'
-import {Amplitude} from '@amplitude/react-native';
 import {ampInstance} from '../../App';
 import {UnavailableProductsModal} from '../components/UnavailableProductsModal';
-import {strings} from '../../assets/localization/localization';
 import {SaleModal} from '../components/PayWallScreen/SaleModal';
-import {AppEventsLogger} from 'react-native-fbsdk-next';
-import Smartlook from 'smartlook-react-native-wrapper';
 
 const ChangeMenuBtn = ({visible, onPress, title}) => {
   if (!visible) {
@@ -118,13 +95,13 @@ const MenuScreen = observer(({navigation}) => {
   };
 
   const backAction = () => {
-    Alert.alert(Config.appName, network?.strings?.LogoutAlertTitle, [
+    Alert.alert(Config.appName, 'Вы действительно хотите выйти?', [
       {
-        text: network?.strings?.No,
+        text: 'Нет',
         onPress: () => null,
         style: 'cancel',
       },
-      {text: network?.strings?.Yes, onPress: () => BackHandler.exitApp()},
+      {text: 'Да', onPress: () => BackHandler.exitApp()},
     ]);
   };
 
@@ -190,7 +167,7 @@ const MenuScreen = observer(({navigation}) => {
                   width: 6,
                   height: 6,
                   borderRadius: 3,
-                  backgroundColor: '#F90201',
+                  backgroundColor: '#FF0000',
                 }}
               />
             </View>
@@ -200,30 +177,6 @@ const MenuScreen = observer(({navigation}) => {
           activeOpacity={1}
           style={{paddingHorizontal: 13, paddingVertical: 11}}
           onPress={() => goToProfile()}>
-          {/*{network.user?.access ? null : (*/}
-          {/*  <View*/}
-          {/*    style={{*/}
-          {/*      width: 10,*/}
-          {/*      height: 10,*/}
-          {/*      borderRadius: 10,*/}
-          {/*      backgroundColor: '#FFF',*/}
-          {/*      position: 'absolute',*/}
-          {/*      top: 11,*/}
-          {/*      right: 14,*/}
-          {/*      justifyContent: 'center',*/}
-          {/*      alignItems: 'center',*/}
-          {/*      zIndex: 100,*/}
-          {/*    }}>*/}
-          {/*    <View*/}
-          {/*      style={{*/}
-          {/*        width: 6,*/}
-          {/*        height: 6,*/}
-          {/*        borderRadius: 3,*/}
-          {/*        backgroundColor: Colors.yellow,*/}
-          {/*      }}*/}
-          {/*    />*/}
-          {/*  </View>*/}
-          {/*)}*/}
           <Image
             source={require('../../assets/icons/profile.png')}
             style={{width: 20, height: 22}}
@@ -244,34 +197,49 @@ const MenuScreen = observer(({navigation}) => {
       });
     }
   };
+
+  const openPaywall = () => {
+    if (network.paywalls?.paywall_sale_modal) {
+      setSaleModal(true);
+    } else {
+      navigation.navigate('PayWallScreen', {
+        data: network.paywalls[network.user?.banner?.type],
+      });
+    }
+  };
+
   const listHandler = (isInBasket, recept) => {
     if (network.isBasketUser()) {
       const isUnavailable = network.unavailableRecipes.find(
         rec => rec.id == recept.id,
       );
-      if (isInBasket || !isUnavailable) {
+      if (isInBasket) {
         network.basketHandle(
           isInBasket,
           recept.id,
           recept.persons,
           'MenuScreen',
         );
-      } else {
+        return;
+      }
+      if (!network.canOpenRec(recept)) {
+        openPaywall();
+        return;
+      }
+      if (isUnavailable) {
         setUnavailableRecipe(recept);
         setUnavailableModal(true);
+        return;
       }
+      network.basketHandle(isInBasket, recept.id, recept.persons, 'MenuScreen');
     } else {
       // Если блюдо в списке, то удаляем. Если нет, то проверяем, можно ли его добавить(открыть)
       if (isInBasket) {
         network.deleteFromList(recept);
       } else if (network.canOpenRec(recept)) {
         network.addToList(recept);
-      } else if (network.paywalls?.paywall_sale_modal) {
-        setSaleModal(true);
       } else {
-        navigation.navigate('PayWallScreen', {
-          data: network.paywalls[network.user?.banner?.type],
-        });
+        openPaywall();
       }
     }
   };
@@ -295,7 +263,6 @@ const MenuScreen = observer(({navigation}) => {
   //! Баннеры
 
   const bannerHandler = banner => {
-    console.log(banner)
     if (banner.type == 'list_history') {
       navigation.navigate('EarlyListScreen');
     } else if (banner.type == 'menu_holiday') {
@@ -361,7 +328,7 @@ const MenuScreen = observer(({navigation}) => {
                     styles.statusContainer,
                     {
                       backgroundColor:
-                        index <= statusIndex ? '#FFE600' : '#F5F5F5',
+                        index <= statusIndex ? '#7CB518' : '#F5F5F5',
                     },
                   ]}>
                   <Image
@@ -383,6 +350,10 @@ const MenuScreen = observer(({navigation}) => {
   };
 
   //! Меню на неделю
+  const dayRecipeScreens = [];
+  for (let i = 0; i < network.dayDishes.length; i++) {
+    dayRecipeScreens.push(i * (common.getLengthByIPhone7(304) + 7));
+  }
   const renderMenu = () => {
     const menu = [];
     for (let i = 0; i < network.sectionNames.length; i++) {
@@ -391,7 +362,8 @@ const MenuScreen = observer(({navigation}) => {
         dish => dish.section_name == section,
       );
       let sectionsInterval = sectionDishes.map(
-        (item, index) => index * (item?.is_big ? 280 : 164) + 15,
+        (item, index) =>
+          index * (item?.is_big ? common.getLengthByIPhone7(272) : 164) + 15,
       );
       menu.push(
         <View key={section}>
@@ -433,65 +405,6 @@ const MenuScreen = observer(({navigation}) => {
     return menu;
   };
 
-  //! Сторисы
-  // const [stop, setStop] = useState(true);
-  // const [currentStory, setCurrentStory] = useState(0);
-  // const [storiesModal, setStoriesModal] = useState(false);
-
-  // const openStory = async i => {
-  //   await setStop(false);
-  //   setCurrentStory(i);
-  //   setStoriesModal(true);
-  // };
-
-  // const storiesBody = [];
-  // for (let i = 0; i < network.stories.length; i++) {
-  //   storiesBody.push(
-  //     // <View style={{opacity:network.stories[i].viewed ? 0.5 : 1}}>
-  //     <TouchableOpacity
-  //       onPress={() => openStory(i)}
-  //       key={network.stories[i].id}>
-  //       <FastImage
-  //         source={{uri: network.stories[i].image}}
-  //         style={{
-  //           width: common.getLengthByIPhone7(108),
-  //           height: common.getLengthByIPhone7(108),
-  //           backgroundColor: '#FFF',
-  //           marginRight: 9,
-  //           justifyContent: 'flex-end',
-  //           borderRadius: 16,
-  //           paddingHorizontal: 6,
-  //           paddingBottom: 9,
-  //         }}
-  //         borderRadius={16}>
-  //         {network.stories[i].viewed ? null : (
-  //           <View
-  //             style={{
-  //               width: 14,
-  //               height: 14,
-  //               backgroundColor: '#FFF',
-  //               borderRadius: 7,
-  //               position: 'absolute',
-  //               right: 1,
-  //               top: 1,
-  //               justifyContent: 'center',
-  //               alignItems: 'center',
-  //             }}>
-  //             <View
-  //               style={{
-  //                 width: 8,
-  //                 height: 8,
-  //                 borderRadius: 4,
-  //                 backgroundColor: Colors.yellow,
-  //               }}
-  //             />
-  //           </View>
-  //         )}
-  //       </FastImage>
-  //     </TouchableOpacity>,
-  //     // </View>
-  //   );
-  // }
   useEffect(() => {
     const onFocus = navigation.addListener('focus', () => {
       if (Platform.OS == 'ios') {
@@ -564,6 +477,24 @@ const MenuScreen = observer(({navigation}) => {
     }
   }, [network.user?.store_id, network.stores.length]);
 
+  const onNavigateStore = useCallback(() => {
+    if (network.user?.addresses?.length && network.user?.shop_id) {
+      navigation.navigate('StoresScreen', {
+        title: network.user?.addresses?.map(item =>
+          item?.id == network.user?.address_active ? item?.full_address : null,
+        ),
+        coords: network.user.addresses.find(
+          adr => adr.id == network.user.address_active,
+        ),
+        currentStore: network?.user?.store_id,
+      });
+    } else {
+      navigation.navigate(
+        network?.userMap == 'google' ? 'GoogleMapScreen' : 'MapScreen',
+      );
+    }
+  }, [navigation]);
+
   return (
     <>
       <View style={{backgroundColor: '#FFF', flex: 1}}>
@@ -581,35 +512,29 @@ const MenuScreen = observer(({navigation}) => {
           scrollEventThrottle={16}
           contentContainerStyle={{paddingBottom: 30}}
           ref={mainScroll}>
-          {/*<ScrollView*/}
-          {/*  horizontal*/}
-          {/*  showsHorizontalScrollIndicator={false}*/}
-          {/*  contentContainerStyle={{*/}
-          {/*    paddingLeft: 16,*/}
-          {/*    marginTop: 16,*/}
-          {/*    paddingRight: 7,*/}
-          {/*  }}>*/}
-          {/*  {storiesBody}*/}
-          {/*</ScrollView>*/}
-          {userStore && network.isBasketUser() ? (
+          {network.isBasketUser() ? (
             <StoreView
-              key={userStore.id}
+              key={userStore?.id}
               store={userStore}
-              onPress={() =>
-                navigation.navigate('StoresScreen', {
-                  title: network.user?.addresses.map(item =>
-                    item?.id == network.user?.address_active
-                      ? item?.full_address
-                      : null,
-                  ),
-                  coords: network.user.addresses.find(
-                    adr => adr.id == network.user.address_active,
-                  ),
-                  currentStore: network?.user?.store_id,
-                })
-              }
+              onPress={onNavigateStore}
             />
-          ) : null}
+          ) : (
+            <ShadowView
+              key={'emptyStore'}
+              firstContStyle={{marginHorizontal: 16, marginTop: 16}}>
+              <TouchableOpacity
+                onPress={onNavigateStore}
+                style={{
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}>
+                <Text style={[styles.addsTitle, {fontWeight: 'bold'}]}>
+                  Без доставки
+                </Text>
+              </TouchableOpacity>
+            </ShadowView>
+          )}
           {network.isBasketUser() ? (
             network?.user?.address_active ? (
               <ShadowView
@@ -702,6 +627,7 @@ const MenuScreen = observer(({navigation}) => {
               style={{marginTop: 16}}
               activeOpacity={1}
               key={'banner1'}
+              disabled
               onPress={() => bannerHandler(network.banner1)}>
               <ImageBackground
                 style={{
@@ -723,44 +649,45 @@ const MenuScreen = observer(({navigation}) => {
           {network?.user?.orders_active
             ? network?.user?.orders_active.map(order => renderOrder(order))
             : null}
-          <View
-            style={{
-              marginVertical: 22,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-            }}>
-            <Text style={styles.subtitle}>
-              {network.strings?.RecipesOfTheDay}
-            </Text>
-            <TouchableHighlight
-              underlayColor={'#EEEEEE'}
+          {network.dayDishes?.length ? (
+            <View
               style={{
-                borderRadius: 16,
-                backgroundColor: '#F5F5F5',
-              }}
-              onPress={() =>
-                navigation.navigate('SecondReceptDayScreen', {from: 'menu'})
-              }>
-              <View style={styles.receptDaysBtn}>
-                <Text
-                  style={[styles.timeText, {marginBottom: 0, marginRight: 4}]}
-                  allowFontScaling={false}>
-                  {network.strings?.Open}
-                </Text>
-                <Image
-                  source={require('../../assets/icons/goDown.png')}
-                  style={{
-                    width: 13,
-                    height: 8,
-                    marginTop: 5,
-                    transform: [{rotate: '-90deg'}],
-                  }}
-                />
-              </View>
-            </TouchableHighlight>
-          </View>
+                marginVertical: 22,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingHorizontal: 16,
+              }}>
+              <Text style={styles.subtitle}>
+                {network.strings?.RecipesOfTheDay}
+              </Text>
+              <TouchableHighlight
+                underlayColor={'#EEEEEE'}
+                style={{borderRadius: 16, backgroundColor: '#F5F5F5'}}
+                onPress={() =>
+                  navigation.navigate('SecondReceptDayScreen', {from: 'menu'})
+                }>
+                <View style={styles.receptDaysBtn}>
+                  <Text
+                    style={[styles.timeText, {marginBottom: 0, marginRight: 4}]}
+                    allowFontScaling={false}>
+                    {network.strings?.Open}
+                  </Text>
+                  <Image
+                    source={require('../../assets/icons/goDown.png')}
+                    style={{
+                      width: 13,
+                      height: 8,
+                      marginTop: 5,
+                      transform: [{rotate: '-90deg'}],
+                    }}
+                  />
+                </View>
+              </TouchableHighlight>
+            </View>
+          ) : (
+            <View style={{marginBottom: 22}} />
+          )}
           {/* <FlatList
             showsHorizontalScrollIndicator={false}
             horizontal
@@ -800,6 +727,7 @@ const MenuScreen = observer(({navigation}) => {
             <TouchableOpacity
               activeOpacity={1}
               key={'bannner_2'}
+              disabled
               onPress={() => bannerHandler(network.banner2)}>
               <ImageBackground
                 source={{uri: network.banner2?.image_btn?.big_webp}}
@@ -839,15 +767,6 @@ const MenuScreen = observer(({navigation}) => {
           closeModal={() => setAddressesModal(false)}
           navigation={navigation}
         />
-        {/* <StoriesModal
-          modal={storiesModal}
-          closeModal={() => setStoriesModal(false)}
-          navigation={navigation}
-          currentPage={currentStory}
-          setCurrentPage={setCurrentStory}
-          stop={stop}
-          setStop={setStop}
-        /> */}
         <UnavailableProductsModal
           modal={unavailableModal}
           closeModal={() => setUnavailableModal(false)}

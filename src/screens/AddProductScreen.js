@@ -153,10 +153,7 @@ const AddProductScreen = observer(({navigation, route}) => {
             </View>
           )}
         />
-        <BottomListBtn
-          navigation={navigation}
-          containerStyle={{paddingBottom: 8}}
-        />
+        <BottomListBtn navigation={navigation} />
       </KeyboardAvoidingView>
     </View>
   );

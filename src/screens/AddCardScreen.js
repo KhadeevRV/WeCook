@@ -138,7 +138,7 @@ const AddCardScreen = observer(({navigation}) => {
   };
 
   const sendError = text => {
-    Alert.alert('Ошибка', text);
+    Alert.alert(network?.strings?.Error, text);
   };
 
   const addCard = async () => {

@@ -70,31 +70,32 @@ const SendSmsScreen = observer(({navigation, route}) => {
     setloading(true);
     try {
       await sendCode(phone, finalCode);
-      const token = await updateInfo('phone', phone);
-      if (token) {
-        runInAction(async () => {
-          AsyncStorage.setItem('token', token);
-          network.access_token = token;
-          await getUserInfo(token);
-          await getMenu();
-          await getBasket();
-          await getFavors();
-          setloading(false);
-          ampInstance.logEvent('phone confirmed');
-          navigation.navigate(
-            from ? from : exit ? 'ReceptDayScreen' : 'MainStack',
-          );
-        });
-      } else {
-        runInAction(async () => {
-          network.user.phone = phone.replace(/[^\d.-]/g, '');
-          await getUserInfo();
-          setloading(false);
-          navigation.navigate(
-            from ? from : exit ? 'ReceptDayScreen' : 'MainStack',
-          );
-        });
-      }
+      await updateInfo('phone', phone);
+      await getUserInfo();
+      setloading(false);
+      ampInstance.logEvent('phone confirmed');
+      navigation.navigate(from ? from : exit ? 'ReceptDayScreen' : 'MainStack');
+      // if (token) {
+      //   runInAction(async () => {
+      //     AsyncStorage.setItem('token', token);
+      //     network.access_token = token;
+      //     await getUserInfo(token);
+      //     await getMenu();
+      //     await getBasket();
+      //     await getFavors();
+      //     setloading(false);
+      //     ampInstance.logEvent('phone confirmed');
+      //   });
+      // } else {
+      //   runInAction(async () => {
+      //     network.user.phone = phone.replace(/[^\d.-]/g, '');
+      //     await getUserInfo();
+      //     setloading(false);
+      //     navigation.navigate(
+      //       from ? from : exit ? 'ReceptDayScreen' : 'MainStack',
+      //     );
+      //   });
+      // }
     } catch (err) {
       setloading(false);
       Alert.alert(network.strings?.Error, err);

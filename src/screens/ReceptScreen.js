@@ -25,6 +25,7 @@ import common from '../../Utilites/Common';
 import BottomSheetBehavior from 'reanimated-bottom-sheet';
 import Colors from '../constants/Colors';
 import DropShadow from 'react-native-drop-shadow';
+import Animated from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import Share from 'react-native-share';
 import {BlurView} from '@react-native-community/blur';
@@ -698,7 +699,7 @@ const ReceptScreen = observer(({navigation, route}) => {
           underlayColor={Colors.underLayYellow}>
           <Image
             source={require('../../assets/icons/complete.png')}
-            style={{width: 18, height: 14}}
+            style={{width: 18, height: 14, tintColor: '#FFF'}}
           />
         </TouchableHighlight>
       );
@@ -723,9 +724,11 @@ const ReceptScreen = observer(({navigation, route}) => {
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Image
             source={require('../../assets/icons/list.png')}
-            style={{width: 18, height: 23, marginRight: 12}}
+            style={{width: 18, height: 23, marginRight: 12, tintColor: '#FFF'}}
           />
-          <Text style={styles.subText}>{network?.strings?.ToTheList}</Text>
+          <Text style={[styles.subText, {color: '#FFF'}]}>
+            {network?.strings?.ToTheList}
+          </Text>
         </View>
       </TouchableHighlight>
     );
@@ -754,11 +757,11 @@ const ReceptScreen = observer(({navigation, route}) => {
           disabled={isLoading}
           underlayColor={Colors.underLayYellow}>
           {isLoading ? (
-            <ActivityIndicator color={Colors.textColor} />
+            <ActivityIndicator color={'#FFF'} />
           ) : (
             <Image
               source={require('../../assets/icons/complete.png')}
-              style={{width: 18, height: 14}}
+              style={{width: 18, height: 14, tintColor: '#FFF'}}
             />
           )}
         </TouchableHighlight>
@@ -800,14 +803,21 @@ const ReceptScreen = observer(({navigation, route}) => {
         underlayColor={Colors.underLayYellow}>
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           {isLoading ? (
-            <ActivityIndicator color={Colors.textColor} />
+            <ActivityIndicator color={'#FFF'} />
           ) : (
             <>
               <Image
                 source={require('../../assets/icons/basket.png')}
-                style={{width: 23, height: 23, marginRight: 12}}
+                style={{
+                  width: 23,
+                  height: 23,
+                  marginRight: 12,
+                  tintColor: '#FFF',
+                }}
               />
-              <Text style={styles.subText}>{network.strings?.AddToBasket}</Text>
+              <Text style={[styles.subText, {color: '#FFF'}]}>
+                {network.strings?.AddToBasket}
+              </Text>
             </>
           )}
         </View>

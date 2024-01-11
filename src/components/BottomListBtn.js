@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {TouchableHighlight} from 'react-native-gesture-handler';
-import {getBottomSpace} from 'react-native-iphone-x-helper';
 import common from '../../Utilites/Common';
 import network from '../../Utilites/Network';
 import Colors from '../constants/Colors';
 import {strings} from '../../assets/localization/localization';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const BottomListBtn = observer(
   ({
@@ -45,10 +45,11 @@ const BottomListBtn = observer(
         network.basketInfo?.summa_in_cart,
         network.basketInfo?.delivery_free_min,
       ) == 100;
+    const insets = useSafeAreaInsets();
 
     if (!network.isBasketUser()) {
       return (
-        <View style={styles.container}>
+        <View style={[styles.container, {paddingBottom: 8 + insets.bottom}]}>
           <TouchableHighlight
             onPress={() => navigation.navigate('ListScreen')}
             style={{
@@ -70,7 +71,7 @@ const BottomListBtn = observer(
                   paddingTop: 2,
                   paddingBottom: 3,
                   borderRadius: 20,
-                  backgroundColor: Colors.textColor,
+                  backgroundColor: '#FFF',
                   marginRight: 7,
                   minWidth: 24,
                   alignItems: 'center',
@@ -94,7 +95,12 @@ const BottomListBtn = observer(
     }
 
     return (
-      <View style={[styles.container, containerStyle]}>
+      <View
+        style={[
+          styles.container,
+          {paddingBottom: 8 + insets.bottom},
+          containerStyle,
+        ]}>
         <View
           style={[
             styles.line,
@@ -109,7 +115,7 @@ const BottomListBtn = observer(
                     network.basketInfo?.summa_in_cart,
                     network.basketInfo?.delivery_free_min,
                   ) + '%',
-                backgroundColor: '#00C108',
+                backgroundColor: Colors.yellow,
                 position: 'absolute',
                 zIndex: 10,
               },
@@ -180,7 +186,7 @@ const BottomListBtn = observer(
           underlayColor={Colors.underLayYellow}>
           {isLoading || network.isLoadingBasket ? (
             <View>
-              <ActivityIndicator color={Colors.textColor} />
+              <ActivityIndicator color={'#FFF'} />
             </View>
           ) : (
             <View
@@ -196,7 +202,12 @@ const BottomListBtn = observer(
                       ? require('../../assets/icons/listMenu.png')
                       : require('../../assets/icons/menu.png')
                   }
-                  style={{width: 22, height: 20, marginRight: 7}}
+                  style={{
+                    width: 22,
+                    height: 20,
+                    marginRight: 7,
+                    tintColor: '#FFF',
+                  }}
                 />
                 {fromBasket ? (
                   <Text style={styles.addsTitle}>
@@ -241,7 +252,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 8,
     backgroundColor: '#FFF',
-    paddingBottom: getBottomSpace() + 8,
     borderTopWidth: 0.5,
     borderColor: '#D3D3D3',
   },
@@ -252,7 +262,7 @@ const styles = StyleSheet.create({
     }),
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: Colors.textColor,
     lineHeight: 16,
   },
   touchContainer: {
@@ -268,7 +278,7 @@ const styles = StyleSheet.create({
     }),
     fontSize: 16,
     lineHeight: 19,
-    color: Colors.textColor,
+    color: '#FFF',
   },
   basketView: {
     position: 'absolute',
@@ -283,7 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     lineHeight: 19,
-    color: Colors.textColor,
+    color: '#FFF',
   },
   priceText: {
     fontFamily: Platform.select({
@@ -291,7 +301,7 @@ const styles = StyleSheet.create({
       android: 'SFProDisplay-Regular',
     }),
     fontSize: 14,
-    color: Colors.textColor,
+    color: '#FFF',
     lineHeight: 18,
   },
   orderSumText: {

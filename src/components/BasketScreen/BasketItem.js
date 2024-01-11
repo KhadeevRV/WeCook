@@ -16,7 +16,6 @@ import {
   TouchableHighlight,
 } from 'react-native-gesture-handler';
 import common from '../../../Utilites/Common';
-import {getStatusBarHeight, getBottomSpace} from 'react-native-iphone-x-helper';
 import Colors from '../../constants/Colors';
 import {BlurView} from '@react-native-community/blur';
 import LinearGradient from 'react-native-linear-gradient';
@@ -55,7 +54,7 @@ const BasketItem = observer(({recept, onPress}) => {
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: openedEye
-            ? Colors.yellow
+            ? '#FFE600'
             : Platform.select({ios: null, android: '#E5E5E5'}),
           overflow: 'hidden',
         }}

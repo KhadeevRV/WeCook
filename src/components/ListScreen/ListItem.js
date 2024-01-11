@@ -40,7 +40,7 @@ const ListItem = observer(({recept, onPress, eyeHandler}) => {
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: openedEye
-            ? Colors.yellow
+            ? '#FFE600'
             : Platform.select({ios: null, android: '#E5E5E5'}),
           overflow: 'hidden',
         }}

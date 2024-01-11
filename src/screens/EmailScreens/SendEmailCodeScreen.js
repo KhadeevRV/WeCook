@@ -16,7 +16,7 @@ import network, {
   getFavors,
   getMenu,
   getModals,
-  getScreens,
+  getRegisterScreens,
   getStores,
   getUserCards,
   getUserInfo,
@@ -33,6 +33,7 @@ import {GreyBtn} from '../../components/GreyBtn';
 import {runInAction} from 'mobx';
 import {ampInstance} from '../../../App';
 import {useInterval} from '../ReceptScreen';
+import {updateAllData} from '../SplashScreen';
 
 const SendEmailCodeScreen = observer(({navigation, route}) => {
   const [code, setCode] = useState('');
@@ -50,9 +51,11 @@ const SendEmailCodeScreen = observer(({navigation, route}) => {
   }, 1000);
 
   const onNavigateNext = () => {
-    const onboardingKeys = Object.keys(network.onboarding);
-    if (fromOnboarding && onboardingKeys.length) {
-      navigation.navigate(onboardingKeys[0]);
+    const onboardingKeys = Object.keys(network.registerOnboarding);
+    if (fromOnboarding) {
+      navigation.navigate(
+        onboardingKeys.length ? onboardingKeys[0] : 'MainStack',
+      );
       return;
     }
     navigation.navigate('ProfileScreen');
@@ -77,14 +80,7 @@ const SendEmailCodeScreen = observer(({navigation, route}) => {
       if (data) {
         runInAction(async () => {
           network.user = data;
-          await Promise.all([
-            getScreens(),
-            getMenu(),
-            getStores(),
-            getUserCards(),
-            getFavors(),
-            getModals(),
-          ]);
+          await Promise.all([getRegisterScreens(), updateAllData()]);
           ampInstance.logEvent('login email');
           setloading(false);
           onNavigateNext();

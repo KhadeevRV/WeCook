@@ -12,9 +12,10 @@ import {
   TransitionSpecs,
   TransitionPresets,
 } from '@react-navigation/stack';
-import {NavigationContainer, useNavigation} from '@react-navigation/native';
+import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import analytics from '@react-native-firebase/analytics';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import WelcomeScreen from '../screens/WelcomeScreen';
 import ReceptScreen from '../screens/ReceptScreen';
@@ -56,6 +57,11 @@ import PersonalizingScreen from '../screens/PersonalizingScreen';
 import EmailLoginScreen from '../screens/EmailScreens/EmailLoginScreen';
 import SendEmailCodeScreen from '../screens/EmailScreens/SendEmailCodeScreen';
 import {ModalManager} from '../services/ModalManager';
+import HelloScreen from '../screens/HelloScreen';
+import ChooseLoginScreen from '../screens/ChooseLoginScreen';
+import ChooseEatScreen from '../screens/QuizScreens/ChooseEatScreen';
+import UserInfoScreen from '../screens/QuizScreens/UserInfoScreen';
+import ChooseListOrDeliveryScreen from '../screens/QuizScreens/ChooseListOrDeliveryScreen';
 
 const SlideFromBottom = {...TransitionPresets.ModalSlideFromBottomIOS};
 const SlideFromRight = {...TransitionPresets.SlideFromRightIOS};
@@ -86,12 +92,33 @@ const OnboardingStack = observer(() => {
           cardStyle: {backgroundColor: '#FFF'},
         };
       }}
-      // initialRouteName={'PersonalizingScreen'}
       initialRouteName={
         Object.keys(network?.onboarding).length
           ? Object.keys(network?.onboarding)[0]
-          : 'WelcomeScreen'
+          : Object.keys(network?.registerOnboarding).length
+          ? Object.keys(network?.registerOnboarding)[0]
+          : 'HelloScreen'
       }>
+      <Stack.Screen
+        name="HelloScreen"
+        options={{gestureEnabled: false, header: () => null}}
+        component={HelloScreen}
+      />
+      <Stack.Screen
+        name="ChooseLoginScreen"
+        options={{gestureEnabled: false, header: () => null}}
+        component={ChooseLoginScreen}
+      />
+      <Stack.Screen
+        name="UserInfoScreen"
+        options={{gestureEnabled: false, header: () => null}}
+        component={UserInfoScreen}
+      />
+      <Stack.Screen
+        name="ChooseListOrDeliveryScreen"
+        options={{gestureEnabled: false, header: () => null}}
+        component={ChooseListOrDeliveryScreen}
+      />
       <Stack.Screen
         name="WelcomeScreen"
         options={{gestureEnabled: false, header: () => null}}
@@ -118,6 +145,11 @@ const OnboardingStack = observer(() => {
         name="SecondQuizScreen"
         options={{gestureEnabled: true, header: () => null}}
         component={SecondQuizScreen}
+      />
+      <Stack.Screen
+        name="ChooseEatScreen"
+        options={{gestureEnabled: false, header: () => null}}
+        component={ChooseEatScreen}
       />
       <Stack.Screen
         name="ThirdQuizScreen"
@@ -418,39 +450,42 @@ export const navigationRef = React.createRef(null);
 export const createRootNavigator = () => {
   const AllScreens = () => {
     const routeNameRef = useRef();
-
     return (
-      <NavigationContainer
-        ref={navigationRef}
-        onReady={() =>
-          (routeNameRef.current = navigationRef.current.getCurrentRoute().name)
-        }
-        onStateChange={async () => {
-          const previousRouteName = routeNameRef.current;
-          const currentRouteName = navigationRef.current.getCurrentRoute().name;
-          if (previousRouteName !== currentRouteName) {
-            runInAction(async () => {
-              analytics().logScreenView({
-                screen_name: currentRouteName,
-                screen_class: currentRouteName,
-              });
-              if ((new Date() - network.screenDate) / 60000 < 60) {
-                analytics().logEvent(`${previousRouteName}`, {
-                  value: (new Date() - network.screenDate) / 1000,
-                  screenTime: (new Date() - network.screenDate) / 1000,
-                });
-                // console.warn(previousRouteName,'screenTime:', (new Date() - network.screenDate)/1000)
-              }
-              network.screenDate = new Date();
-              network.currentScreen = currentRouteName;
-            });
-            // console.warn(currentRouteName)
+      <SafeAreaProvider>
+        <NavigationContainer
+          ref={navigationRef}
+          onReady={() =>
+            (routeNameRef.current =
+              navigationRef.current.getCurrentRoute().name)
           }
-          routeNameRef.current = currentRouteName;
-        }}>
-        <AppStack />
-        <ModalManager />
-      </NavigationContainer>
+          onStateChange={async () => {
+            const previousRouteName = routeNameRef.current;
+            const currentRouteName =
+              navigationRef.current.getCurrentRoute().name;
+            if (previousRouteName !== currentRouteName) {
+              runInAction(async () => {
+                analytics().logScreenView({
+                  screen_name: currentRouteName,
+                  screen_class: currentRouteName,
+                });
+                if ((new Date() - network.screenDate) / 60000 < 60) {
+                  analytics().logEvent(`${previousRouteName}`, {
+                    value: (new Date() - network.screenDate) / 1000,
+                    screenTime: (new Date() - network.screenDate) / 1000,
+                  });
+                  // console.warn(previousRouteName,'screenTime:', (new Date() - network.screenDate)/1000)
+                }
+                network.screenDate = new Date();
+                network.currentScreen = currentRouteName;
+              });
+              // console.warn(currentRouteName)
+            }
+            routeNameRef.current = currentRouteName;
+          }}>
+          <AppStack />
+          <ModalManager />
+        </NavigationContainer>
+      </SafeAreaProvider>
     );
   };
   return AllScreens;

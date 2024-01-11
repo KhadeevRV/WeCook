@@ -52,7 +52,7 @@ const ProfileScreen = observer(({navigation}) => {
 
   const rateApp = () => {
     let options = {
-      AppleAppID: '1577136146',
+      AppleAppID: '1540264589',
       GooglePackageName: 'app.wecook',
       OtherAndroidURL: 'http://www.randomappstore.com/app/47172391',
       preferredAndroidMarket: AndroidMarket.Google,
@@ -92,7 +92,7 @@ const ProfileScreen = observer(({navigation}) => {
   };
 
   const header = [
-    <View style={styles.header} key={'ProfileHeader'}>
+    <View style={styles.header} key={'ProfileScreenHeader'}>
       <TouchableOpacity
         activeOpacity={1}
         style={{
@@ -217,7 +217,7 @@ const ProfileScreen = observer(({navigation}) => {
       );
     }
     return (
-      <View style={{marginTop: 41}} key={item.title}>
+      <View style={{marginTop: 41}}>
         <Text style={styles.itemTitle} allowFontScaling={false}>
           {item.title}
         </Text>
@@ -281,6 +281,7 @@ const ProfileScreen = observer(({navigation}) => {
       navigation.navigate('LoginScreen', {exit: true});
     });
   };
+
   return (
     <View style={{flex: 1, backgroundColor: '#FFF'}}>
       <Spinner visible={loading} />

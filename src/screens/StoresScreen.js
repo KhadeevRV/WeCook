@@ -23,8 +23,9 @@ import {runInAction} from 'mobx';
 import {Btn} from '../components/Btn';
 import common from '../../Utilites/Common';
 import Colors from '../constants/Colors';
-import {getBottomSpace, getStatusBarHeight} from 'react-native-iphone-x-helper';
 import network, {
+  getBasket,
+  getList,
   getStoresByCoords,
   getUnavailableProducts,
   getUserInfo,
@@ -33,7 +34,7 @@ import network, {
 } from '../../Utilites/Network';
 import {ShadowView} from '../components/ShadowView';
 import {ampInstance} from '../../App';
-import {strings} from '../../assets/localization/localization';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export const StoreView = ({
   store,
@@ -41,7 +42,7 @@ export const StoreView = ({
   isSelect = false,
   isCurrent = false,
 }) => {
-  const isAvailable = store.hasOwnProperty('is_available')
+  const isAvailable = store?.hasOwnProperty('is_available')
     ? store.is_available
     : true;
   return (
@@ -49,14 +50,7 @@ export const StoreView = ({
       <TouchableOpacity
         onPress={onPress}
         disabled={!isAvailable}
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-        }}>
+        style={styles.storeContainer}>
         <View style={{flexDirection: 'row', flex: 0.9}}>
           <Image
             source={{uri: store?.logo}}
@@ -100,21 +94,17 @@ export const StoreView = ({
           <View style={{flex: 0.1, alignItems: 'flex-end'}}>
             {isSelect ? (
               <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderRadius: 10,
-                  backgroundColor: isCurrent ? '#FFE600' : Colors.grayColor,
-                }}>
+                style={[
+                  styles.dotContainer,
+                  {backgroundColor: isCurrent ? '#7CB518' : Colors.grayColor},
+                ]}>
                 {isCurrent ? (
                   <View
                     style={{
                       width: 6,
                       height: 6,
                       borderRadius: 3,
-                      backgroundColor: Colors.textColor,
+                      backgroundColor: '#FFF',
                     }}
                   />
                 ) : null}
@@ -161,52 +151,77 @@ export const StoreView = ({
 
 const StoresScreen = observer(({navigation, route}) => {
   const title = route?.params?.title;
+  const insets = useSafeAreaInsets();
   const [stores, setStores] = useState(route?.params?.stores);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStore, setCurrentStore] = useState(
-    route?.params?.currentStore ?? route?.params?.stores[0].id,
-  );
+  const [isLoadingStores, setIsLoadingStores] = useState(false);
+  const [currentStore, setCurrentStore] = useState(() => {
+    if (network.isBasketUser()) {
+      return route?.params?.currentStore ?? route?.params?.stores[0].id;
+    }
+    return null;
+  });
+  const [isList, setIsList] = useState(!network.isBasketUser());
   const coords = route?.params?.coords;
   const fullAddress = route?.params?.fullAddress;
   const fromOnboarding = route.params?.fromOnboarding;
-  const screen = network.onboarding?.MapScreen;
+  const screen = network.registerOnboarding?.MapScreen;
 
   const onFetch = async () => {
     try {
+      setIsLoadingStores(true);
       const newStores = await getStoresByCoords(coords.lat, coords.lon);
+      setIsLoadingStores(false);
       setStores(newStores);
     } catch (e) {
+      setIsLoadingStores(false);
       Alert.alert('Ошибка', e);
     }
   };
+
+  const onNavigate = (adrResp = null, fromList) => {
+    if (fromOnboarding) {
+      navigation.navigate(screen?.next_board ?? 'MainStack');
+      return;
+    }
+    if (adrResp || fromList) {
+      adrResp ? Alert.alert(network?.strings?.Success, adrResp?.message) : null;
+      navigation.navigate('MenuScreen');
+    } else {
+      navigation.goBack();
+    }
+  };
+
   const confirmStore = async () => {
     setIsLoading(true);
     try {
-      await updateInfo('store_id', currentStore);
       let adrResp = null;
-      if (route?.params?.stores) {
-        adrResp = await setUserAddress(
-          coords.lat,
-          coords.lon,
-          title,
-          fullAddress,
-        );
+      if (currentStore) {
+        if (!network.isBasketUser()) {
+          await updateInfo('work_type', 'delivery');
+          await getBasket();
+        }
+        await updateInfo('store_id', currentStore);
+        if (route?.params?.stores) {
+          adrResp = await setUserAddress(
+            coords.lat,
+            coords.lon,
+            title,
+            fullAddress,
+          );
+        }
+        await getUnavailableProducts();
+      } else {
+        await updateInfo('work_type', 'list');
+        await getList();
       }
       await getUserInfo();
-      await getUnavailableProducts();
       setIsLoading(false);
-      if (fromOnboarding) {
-        navigation.navigate(screen?.next_board ?? 'MainStack');
-        return;
-      }
-      if (adrResp) {
-        Alert.alert(network?.strings?.Success, adrResp?.message);
-        navigation.navigate('MenuScreen');
-      } else {
-        navigation.goBack();
-      }
+      onNavigate(adrResp, !currentStore);
       ampInstance.logEvent('retailer confirmed', {
-        retailer: stores.find(store => store.id == currentStore)?.name,
+        retailer: isList
+          ? 'List'
+          : stores.find(store => store.id == currentStore)?.name,
       });
     } catch (e) {
       setIsLoading(false);
@@ -215,7 +230,7 @@ const StoresScreen = observer(({navigation, route}) => {
   };
 
   const header = [
-    <View style={styles.header}>
+    <View style={styles.header} key={'StoreScreenHeader'}>
       <TouchableOpacity
         activeOpacity={1}
         disabled={isLoading}
@@ -249,9 +264,7 @@ const StoresScreen = observer(({navigation, route}) => {
   return (
     <View style={{flex: 1, backgroundColor: '#FFF'}}>
       {Platform.OS == 'ios' ? (
-        <SafeAreaView
-          style={{backgroundColor: '#FFF', height: getStatusBarHeight()}}
-        />
+        <SafeAreaView style={{backgroundColor: '#FFF', height: insets.top}} />
       ) : (
         <SafeAreaView style={{backgroundColor: '#FFF'}} />
       )}
@@ -259,24 +272,63 @@ const StoresScreen = observer(({navigation, route}) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{paddingBottom: 120}}>
-        {stores?.map(store => (
-          <StoreView
-            store={store}
-            key={store?.id}
-            isSelect
-            isCurrent={currentStore === store.id}
-            onPress={() => setCurrentStore(store?.id)}
+        {isLoadingStores ? (
+          <ActivityIndicator
+            size={'large'}
+            color={Colors.textColor}
+            style={{marginTop: 32}}
           />
-        ))}
+        ) : (
+          <>
+            {stores?.map(store => (
+              <StoreView
+                store={store}
+                key={store?.id}
+                isSelect
+                isCurrent={currentStore === store.id}
+                onPress={() => {
+                  setCurrentStore(store?.id);
+                  setIsList(false);
+                }}
+              />
+            ))}
+            <ShadowView firstContStyle={{marginHorizontal: 16, marginTop: 16}}>
+              <TouchableOpacity
+                onPress={() => {
+                  setCurrentStore(null);
+                  setIsList(true);
+                }}
+                style={[styles.storeContainer, {paddingVertical: 23}]}>
+                <Text style={styles.listText}>Поход в магазин со списком</Text>
+                <View
+                  style={[
+                    styles.dotContainer,
+                    {backgroundColor: isList ? '#7CB518' : Colors.grayColor},
+                  ]}>
+                  {isList ? (
+                    <View
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: '#FFF',
+                      }}
+                    />
+                  ) : null}
+                </View>
+              </TouchableOpacity>
+            </ShadowView>
+          </>
+        )}
       </ScrollView>
-      <View style={{paddingBottom: getBottomSpace() + 8}}>
+      <View style={{paddingBottom: insets.bottom + 8}}>
         <TouchableHighlight
           onPress={() => confirmStore()}
           style={styles.touchContainer}
           disabled={isLoading}
           underlayColor={Colors.underLayYellow}>
           {isLoading ? (
-            <ActivityIndicator color={Colors.textColor} />
+            <ActivityIndicator color={'#FFF'} />
           ) : (
             <Text style={styles.touchText}>
               {network.strings?.RetailerOkButton}
@@ -327,6 +379,14 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     color: Colors.textColor,
   },
+  storeContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
   touchContainer: {
     backgroundColor: Colors.yellow,
     marginHorizontal: 16,
@@ -343,7 +403,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
     fontWeight: '500',
-    color: Colors.textColor,
+    color: '#FFF',
     textAlign: 'center',
   },
   laterView: {
@@ -362,5 +422,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFF',
     textTransform: 'uppercase',
+  },
+  listText: {
+    fontFamily: Platform.select({
+      ios: 'SF Pro Display',
+      android: 'SFProDisplay-Bold',
+    }),
+    fontSize: 16,
+    lineHeight: 19,
+    fontWeight: '800',
+    color: Colors.textColor,
+  },
+  dotContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
   },
 });
